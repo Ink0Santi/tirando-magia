@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Chat | Tirando Magia</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+<header class="navbar">
+
+    <a href="index.html" class="logo">
+        🎵 Tirando Magia
+    </a>
+
+    <nav>
+        <a href="index.html">Inicio</a>
+        <a href="buscar.html">Buscar músicos</a>
+        <a href="mensajes.html" class="active">💬 Mensajes</a>
+        <a href="perfil.html">Mi perfil</a>
+    </nav>
+
+</header>
+
+
+<main class="chat-page">
+
+    <div class="chat-container">
+
+        <!-- CABECERA DEL CHAT -->
+
+        <div class="chat-header">
+
+            <a href="mensajes.html" class="chat-back">
+                ←
+            </a>
+
+            <div id="chat-avatar" class="chat-avatar">
+                🎸
+            </div>
+
+            <div class="chat-user-info">
+
+                <h1 id="chat-name">
+                    Cargando...
+                </h1>
+
+                <p id="chat-instrument">
+                    Músico
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- MENSAJES -->
+
+        <div id="chat-messages" class="chat-messages">
+
+            <div class="chat-loading">
+                Cargando conversación...
+            </div>
+
+        </div>
+
+
+        <!-- ESCRIBIR -->
+
+        <form id="chat-form" class="chat-input-area">
+
+            <input
+                type="text"
+                id="message-input"
+                placeholder="Escribí un mensaje..."
+                autocomplete="off"
+                maxlength="2000"
+            >
+
+            <button type="submit">
+                ➤
+            </button>
+
+        </form>
+
+    </div>
+
+</main>
+
+
+<script>
+
+const SUPABASE_URL =
+    "https://buptjwmgwyeivjpcyvai.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_l9ibdIMfbbo8FJoyh3vs1w_-HJjSFI3";
+
+
+const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY,
+    {
+        auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true
+        }
+    }
+);
+
+
+// ELEMENTOS
+
+const messagesContainer =
+    document.getElementById("chat-messages");
+
+const messageInput =
+    document.getElementById("message-input");
+
+const chatForm =
+    document.getElementById("chat-form");
+
+const chatName =
+    document.getElementById("chat-name");
+
+const chatInstrument =
+    document.getElementById("chat-instrument");
+
+const chatAvatar =
+    document.getElementById("chat-avatar");
+
+
+// ID DE CONVERSACIÓN
+
+const params =
+    new URLSearchParams(window.location.search);
+
+const conversationId =
+    params.get("conversation");
+
+
+let currentUser = null;
+let realtimeChannel = null;
+
+
+// ESCAPAR HTML
+
+function escapeHTML(text) {
+
+    if (!text) return "";
+
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+// SCROLL ABAJO
+
+function scrollToBottom() {
+
+    messagesContainer.scrollTop =
+        messagesContainer.scrollHeight;
+}
+
+
+// MOSTRAR MENSAJE
+
+function renderMessage(message) {
+
+    if (!message || !message.id) return;
+
+
+    // Evitar mensajes duplicados
+
+    if (
+        messagesContainer.querySelector(
+            `[data-message-id="${message.id}"]`
+        )
+    ) {
+        return;
+    }
+
+
+    const isMine =
+        message.sender_id === currentUser.id;
+
+
+    const messageElement =
+        document.createElement("div");
+
+
+    messageElement.className =
+        isMine
+            ? "chat-message mine"
+            : "chat-message";
+
+
+    messageElement.dataset.messageId =
+        message.id;
+
+
+    const time =
+        new Date(message.created_at)
+            .toLocaleTimeString("es-AR", {
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+
+
+    messageElement.innerHTML = `
+
+        <div class="message-bubble">
+
+            <p>
+                ${escapeHTML(message.content)}
+            </p>
+
+            <span class="message-time">
+                ${time}
+            </span>
+
+        </div>
+
+    `;
+
+
+    messagesContainer.appendChild(
+        messageElement
+    );
+
+
+    scrollToBottom();
+}
+
+
+// CARGAR PERFIL DEL OTRO USUARIO
+
+async function cargarPerfilOtro(otherUserId) {
+
+    const {
+        data: profile,
+        error
+    } = await supabaseClient
+        .from("profiles")
+        .select(`
+            name,
+            instrument,
+            profile_photo
+        `)
+        .eq("id", otherUserId)
+        .maybeSingle();
+
+
+    if (error) {
+
+        console.error(
+            "Error cargando perfil:",
+            error
+        );
+
+        return;
+    }
+
+
+    if (!profile) return;
+
+
+    chatName.textContent =
+        profile.name || "Músico";
+
+
+    chatInstrument.textContent =
+        profile.instrument || "Músico";
+
+
+    if (profile.profile_photo) {
+
+        chatAvatar.innerHTML = `
+            <img
+                src="${escapeHTML(profile.profile_photo)}"
+                alt="Foto de perfil"
+            >
+        `;
+
+    } else {
+
+        chatAvatar.textContent = "🎸";
+    }
+}
+
+
+// CARGAR CHAT
+
+async function cargarChat() {
+
+    // Verificar sesión
+
+    const {
+        data: {
+            session
+        }
+    } = await supabaseClient.auth.getSession();
+
+
+    if (!session) {
+
+        window.location.href =
+            "login.html";
+
+        return;
+    }
+
+
+    currentUser =
+        session.user;
+
+
+    // Verificar ID
+
+    if (!conversationId) {
+
+        messagesContainer.innerHTML = `
+            <div class="chat-error">
+                <h2>Conversación no encontrada</h2>
+                <a href="mensajes.html">
+                    Volver a mensajes
+                </a>
+            </div>
+        `;
+
+        return;
+    }
+
+
+    // Buscar conversación
+
+    const {
+        data: conversation,
+        error: conversationError
+    } = await supabaseClient
+        .from("conversations")
+        .select(`
+            id,
+            user_one,
+            user_two
+        `)
+        .eq("id", conversationId)
+        .maybeSingle();
+
+
+    if (
+        conversationError ||
+        !conversation
+    ) {
+
+        console.error(
+            conversationError
+        );
+
+        messagesContainer.innerHTML = `
+            <div class="chat-error">
+                <h2>No se pudo abrir esta conversación</h2>
+                <a href="mensajes.html">
+                    Volver a mensajes
+                </a>
+            </div>
+        `;
+
+        return;
+    }
+
+
+    // Verificar que el usuario pertenezca al chat
+
+    const isParticipant =
+        conversation.user_one === currentUser.id ||
+        conversation.user_two === currentUser.id;
+
+
+    if (!isParticipant) {
+
+        messagesContainer.innerHTML = `
+            <div class="chat-error">
+                <h2>No tenés acceso a esta conversación</h2>
+                <a href="mensajes.html">
+                    Volver a mensajes
+                </a>
+            </div>
+        `;
+
+        return;
+    }
+
+
+    // Encontrar al otro usuario
+
+    const otherUserId =
+        conversation.user_one === currentUser.id
+            ? conversation.user_two
+            : conversation.user_one;
+
+
+    await cargarPerfilOtro(
+        otherUserId
+    );
+
+
+    // Cargar mensajes
+
+    const {
+        data: messages,
+        error: messagesError
+    } = await supabaseClient
+        .from("messages")
+        .select(`
+            id,
+            conversation_id,
+            sender_id,
+            content,
+            created_at
+        `)
+        .eq(
+            "conversation_id",
+            conversationId
+        )
+        .order(
+            "created_at",
+            {
+                ascending: true
+            }
+        );
+
+
+    if (messagesError) {
+
+        console.error(
+            messagesError
+        );
+
+        messagesContainer.innerHTML = `
+            <div class="chat-error">
+                No se pudieron cargar los mensajes.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    messagesContainer.innerHTML = "";
+
+
+    if (
+        !messages ||
+        messages.length === 0
+    ) {
+
+        messagesContainer.innerHTML = `
+            <div class="chat-empty">
+                <div>🎸</div>
+                <p>
+                    Todavía no hay mensajes.
+                    ¡Empezá la conversación!
+                </p>
+            </div>
+        `;
+    }
+
+
+    if (messages) {
+
+        messages.forEach(
+            renderMessage
+        );
+    }
+
+
+    scrollToBottom();
+
+
+    // ACTIVAR REALTIME
+
+    activarRealtime();
+}
+
+
+// REALTIME
+
+function activarRealtime() {
+
+    realtimeChannel =
+        supabaseClient
+            .channel(
+                "chat-" + conversationId
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "INSERT",
+                    schema: "public",
+                    table: "messages",
+                    filter:
+                        `conversation_id=eq.${conversationId}`
+                },
+                payload => {
+
+                    // Si todavía está el mensaje
+                    // vacío inicial, eliminarlo
+
+                    const emptyMessage =
+                        messagesContainer
+                            .querySelector(
+                                ".chat-empty"
+                            );
+
+                    if (emptyMessage) {
+
+                        emptyMessage.remove();
+                    }
+
+
+                    renderMessage(
+                        payload.new
+                    );
+                }
+            )
+            .subscribe();
+}
+
+
+// ENVIAR MENSAJE
+
+chatForm.addEventListener(
+    "submit",
+    async function(event) {
+
+        event.preventDefault();
+
+
+        const content =
+            messageInput.value.trim();
+
+
+        if (!content) return;
+
+
+        if (!currentUser) return;
+
+
+        // Desactivar mientras se envía
+
+        messageInput.disabled = true;
+
+
+        const {
+            data,
+            error
+        } = await supabaseClient
+            .from("messages")
+            .insert({
+                conversation_id:
+                    conversationId,
+
+                sender_id:
+                    currentUser.id,
+
+                content:
+                    content
+            })
+            .select()
+            .single();
+
+
+        messageInput.disabled = false;
+
+
+        if (error) {
+
+            console.error(
+                "Error enviando mensaje:",
+                error
+            );
+
+            alert(
+                "No se pudo enviar el mensaje."
+            );
+
+            return;
+        }
+
+
+        // Lo mostramos inmediatamente
+
+        renderMessage(data);
+
+
+        messageInput.value = "";
+
+        messageInput.focus();
+    }
+);
+
+
+// INICIAR
+
+cargarChat();
+
+</script>
+
+</body>
+</html>

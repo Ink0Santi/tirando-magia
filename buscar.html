@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Buscar músicos | Tirando Magia</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+</head>
+
+
+<body>
+
+
+<header>
+
+    <nav>
+
+        <a href="index.html" class="logo">
+            🎵 Tirando Magia
+        </a>
+
+        <div class="nav-links">
+
+            <a href="index.html">
+                Inicio
+            </a>
+
+            <a href="buscar.html">
+                Buscar músicos
+            </a>
+
+            <a href="#">
+                Bandas
+            </a>
+
+            <a href="perfil.html">
+                Mi perfil
+            </a>
+
+            <a href="#" id="logout">
+                Cerrar sesión
+            </a>
+
+        </div>
+
+    </nav>
+
+</header>
+
+
+
+<main class="search-page">
+
+
+    <div class="search-container">
+
+
+        <!-- =================================
+             TÍTULO
+             ================================= -->
+
+        <div class="search-header">
+
+            <h1>
+                🔎 Buscar músicos
+            </h1>
+
+            <p>
+                Encontrá músicos para formar tu próximo proyecto.
+            </p>
+
+        </div>
+
+
+
+        <!-- =================================
+             FILTROS
+             ================================= -->
+
+        <div class="filters">
+
+
+            <div class="filter-group">
+
+                <label for="search-name">
+                    Nombre
+                </label>
+
+                <input
+                    type="text"
+                    id="search-name"
+                    placeholder="Ej: Santiago"
+                >
+
+            </div>
+
+
+
+            <div class="filter-group">
+
+                <label for="search-instrument">
+                    Instrumento principal
+                </label>
+
+                <select id="search-instrument">
+
+                    <option value="">
+                        Todos
+                    </option>
+
+                    <option value="Guitarra">
+                        🎸 Guitarra
+                    </option>
+
+                    <option value="Bajo">
+                        🎸 Bajo
+                    </option>
+
+                    <option value="Batería">
+                        🥁 Batería
+                    </option>
+
+                    <option value="Voz">
+                        🎤 Voz
+                    </option>
+
+                    <option value="Piano">
+                        🎹 Piano
+                    </option>
+
+                    <option value="Teclado">
+                        🎹 Teclado
+                    </option>
+
+                    <option value="Violín">
+                        🎻 Violín
+                    </option>
+
+                    <option value="Saxofón">
+                        🎷 Saxofón
+                    </option>
+
+                    <option value="Otro">
+                        🎵 Otro
+                    </option>
+
+                </select>
+
+            </div>
+
+
+
+            <div class="filter-group">
+
+                <label for="search-secondary">
+                    Instrumento secundario
+                </label>
+
+                <input
+                    type="text"
+                    id="search-secondary"
+                    placeholder="Ej: Piano"
+                >
+
+            </div>
+
+
+
+            <div class="filter-group">
+
+                <label for="search-looking">
+                    ¿Qué está buscando?
+                </label>
+
+                <select id="search-looking">
+
+                    <option value="">
+                        Todos
+                    </option>
+
+                    <option value="Formar una banda">
+                        🎸 Formar una banda
+                    </option>
+
+                    <option value="Unirme a una banda">
+                        🎤 Unirme a una banda
+                    </option>
+
+                    <option value="Buscar músicos">
+                        🔎 Buscar músicos
+                    </option>
+
+                    <option value="Proyecto musical">
+                        🎵 Proyecto musical
+                    </option>
+
+                    <option value="Solo conocer músicos">
+                        🤝 Conocer músicos
+                    </option>
+
+                </select>
+
+            </div>
+
+
+
+            <div class="filter-group">
+
+                <label for="search-genres">
+                    Gustos musicales
+                </label>
+
+                <input
+                    type="text"
+                    id="search-genres"
+                    placeholder="Ej: Rock, Metal, Punk..."
+                >
+
+            </div>
+
+
+
+            <div class="filter-group">
+
+                <label for="search-location">
+                    Ubicación
+                </label>
+
+                <input
+                    type="text"
+                    id="search-location"
+                    placeholder="Ej: Buenos Aires"
+                >
+
+            </div>
+
+
+
+            <button
+                class="button search-button"
+                id="search-button"
+                type="button"
+            >
+                🔎 Filtrar músicos
+            </button>
+
+
+        </div>
+
+
+
+        <!-- =================================
+             LISTA DE MÚSICOS
+             ================================= -->
+
+        <div class="musicians-section">
+
+
+            <div class="musicians-title">
+
+                <h2>
+                    🎵 Músicos
+                </h2>
+
+                <span id="musician-count">
+                    0 músicos
+                </span>
+
+            </div>
+
+
+
+            <div
+                class="musicians-grid"
+                id="musicians-grid"
+            >
+
+                <p class="search-message">
+                    Cargando músicos...
+                </p>
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+</main>
+
+
+
+<footer>
+
+    <p>
+        © 2026 Tirando Magia — Encontrá tu banda.
+    </p>
+
+</footer>
+
+
+
+<script>
+
+
+// ==========================================
+// SUPABASE
+// ==========================================
+
+const SUPABASE_URL =
+    "https://buptjwmgwyeivjpcyvai.supabase.co";
+
+
+const SUPABASE_KEY =
+    "sb_publishable_l9ibdIMfbbo8FJoyh3vs1w_-HJjSFI3";
+
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY,
+        {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true
+            }
+        }
+    );
+
+
+
+// ==========================================
+// ELEMENTOS
+// ==========================================
+
+const musiciansGrid =
+    document.getElementById(
+        "musicians-grid"
+    );
+
+
+const musicianCount =
+    document.getElementById(
+        "musician-count"
+    );
+
+
+
+// ==========================================
+// OBTENER TODOS LOS MÚSICOS
+// ==========================================
+
+async function cargarMusicos() {
+
+    musiciansGrid.innerHTML = `
+        <p class="search-message">
+            Cargando músicos...
+        </p>
+    `;
+
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient
+            .from("profiles")
+            .select("*")
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            );
+
+
+    if (error) {
+
+        console.error(
+            "Error cargando músicos:",
+            error
+        );
+
+
+        musiciansGrid.innerHTML = `
+            <p class="search-message">
+                ❌ ${escapeHTML(error.message)}
+            </p>
+        `;
+
+        musicianCount.textContent =
+            "0 músicos";
+
+        return;
+    }
+
+
+    mostrarMusicos(data || []);
+
+}
+
+
+
+// ==========================================
+// MOSTRAR MÚSICOS
+// ==========================================
+
+function mostrarMusicos(musicians) {
+
+
+    const name =
+        document
+            .getElementById("search-name")
+            .value
+            .trim()
+            .toLowerCase();
+
+
+    const instrument =
+        document
+            .getElementById("search-instrument")
+            .value;
+
+
+    const secondary =
+        document
+            .getElementById("search-secondary")
+            .value
+            .trim()
+            .toLowerCase();
+
+
+    const looking =
+        document
+            .getElementById("search-looking")
+            .value;
+
+
+    const genres =
+        document
+            .getElementById("search-genres")
+            .value
+            .trim()
+            .toLowerCase();
+
+
+    const location =
+        document
+            .getElementById("search-location")
+            .value
+            .trim()
+            .toLowerCase();
+
+
+
+    // ======================================
+    // FILTRAR
+    // ======================================
+
+    const filtered =
+        musicians.filter(
+            musician => {
+
+                const matchesName =
+                    !name ||
+                    musician.name
+                        ?.toLowerCase()
+                        .includes(name);
+
+
+                const matchesInstrument =
+                    !instrument ||
+                    musician.instrument === instrument;
+
+
+                const matchesSecondary =
+                    !secondary ||
+                    musician.secondary_instruments
+                        ?.toLowerCase()
+                        .includes(secondary);
+
+
+                const matchesLooking =
+                    !looking ||
+                    musician.looking_for === looking;
+
+
+                const matchesGenres =
+                    !genres ||
+                    musician.genres
+                        ?.toLowerCase()
+                        .includes(genres);
+
+
+                const matchesLocation =
+                    !location ||
+                    musician.location
+                        ?.toLowerCase()
+                        .includes(location);
+
+
+                return (
+                    matchesName &&
+                    matchesInstrument &&
+                    matchesSecondary &&
+                    matchesLooking &&
+                    matchesGenres &&
+                    matchesLocation
+                );
+
+            }
+        );
+
+
+
+    // ======================================
+    // CONTADOR
+    // ======================================
+
+    musicianCount.textContent =
+        filtered.length === 1
+            ? "1 músico"
+            : `${filtered.length} músicos`;
+
+
+
+    // ======================================
+    // SIN RESULTADOS
+    // ======================================
+
+    if (!filtered.length) {
+
+        musiciansGrid.innerHTML = `
+
+            <div class="no-results">
+
+                <div class="no-results-icon">
+                    🎸
+                </div>
+
+                <h2>
+                    No encontramos músicos
+                </h2>
+
+                <p>
+                    Probá cambiando los filtros.
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+
+    // ======================================
+    // LIMPIAR GRID
+    // ======================================
+
+    musiciansGrid.innerHTML = "";
+
+
+
+    // ======================================
+    // CREAR TARJETAS
+    // ======================================
+
+    filtered.forEach(
+        musician => {
+
+
+            const card =
+                document.createElement("div");
+
+
+            card.className =
+                "musician-card";
+
+
+            /*
+             * IMPORTANTE:
+             * Hacemos que la tarjeta entera
+             * sea clickeable.
+             */
+
+            card.setAttribute(
+                "role",
+                "button"
+            );
+
+
+            card.setAttribute(
+                "tabindex",
+                "0"
+            );
+
+
+            card.setAttribute(
+                "title",
+                "Ver perfil"
+            );
+
+
+            card.innerHTML = `
+
+                <div class="musician-avatar">
+
+                    ${
+                        getInstrumentEmoji(
+                            musician.instrument
+                        )
+                    }
+
+                </div>
+
+
+                <div class="musician-info">
+
+                    <h3>
+                        ${escapeHTML(
+                            musician.name ||
+                            "Músico"
+                        )}
+                    </h3>
+
+
+                    <p class="main-instrument">
+
+                        ${
+                            getInstrumentEmoji(
+                                musician.instrument
+                            )
+                        }
+
+                        ${escapeHTML(
+                            musician.instrument ||
+                            "Sin instrumento"
+                        )}
+
+                    </p>
+
+
+                    ${
+                        musician.secondary_instruments
+                        ?
+                        `
+                        <p>
+                            🎵
+                            ${escapeHTML(
+                                musician.secondary_instruments
+                            )}
+                        </p>
+                        `
+                        :
+                        ""
+                    }
+
+
+                    ${
+                        musician.genres
+                        ?
+                        `
+                        <p>
+                            🎧
+                            ${escapeHTML(
+                                musician.genres
+                            )}
+                        </p>
+                        `
+                        :
+                        ""
+                    }
+
+
+                    ${
+                        musician.looking_for
+                        ?
+                        `
+                        <p>
+                            🔎
+                            ${escapeHTML(
+                                musician.looking_for
+                            )}
+                        </p>
+                        `
+                        :
+                        ""
+                    }
+
+
+                    ${
+                        musician.location
+                        ?
+                        `
+                        <p>
+                            📍
+                            ${escapeHTML(
+                                musician.location
+                            )}
+                        </p>
+                        `
+                        :
+                        ""
+                    }
+
+
+                    <small class="profile-click-hint">
+                        Ver perfil →
+                    </small>
+
+                </div>
+
+            `;
+
+
+            // ======================================
+            // ABRIR PERFIL
+            // ======================================
+
+            function abrirPerfil() {
+
+                if (!musician.id) {
+
+                    console.error(
+                        "Este perfil no tiene ID:",
+                        musician
+                    );
+
+                    return;
+                }
+
+
+                window.location.href =
+                    "usuario.html?id=" +
+                    encodeURIComponent(
+                        musician.id
+                    );
+
+            }
+
+
+            // CLIC DEL MOUSE
+
+            card.addEventListener(
+                "click",
+                abrirPerfil
+            );
+
+
+            // TECLADO
+
+            card.addEventListener(
+                "keydown",
+                function(event) {
+
+                    if (
+                        event.key === "Enter" ||
+                        event.key === " "
+                    ) {
+
+                        event.preventDefault();
+
+                        abrirPerfil();
+
+                    }
+
+                }
+            );
+
+
+            musiciansGrid.appendChild(
+                card
+            );
+
+        }
+    );
+
+}
+
+
+
+// ==========================================
+// EMOJIS DE INSTRUMENTOS
+// ==========================================
+
+function getInstrumentEmoji(
+    instrument
+) {
+
+    switch (instrument) {
+
+        case "Guitarra":
+            return "🎸";
+
+        case "Bajo":
+            return "🎸";
+
+        case "Batería":
+            return "🥁";
+
+        case "Voz":
+            return "🎤";
+
+        case "Piano":
+            return "🎹";
+
+        case "Teclado":
+            return "🎹";
+
+        case "Violín":
+            return "🎻";
+
+        case "Saxofón":
+            return "🎷";
+
+        default:
+            return "🎵";
+
+    }
+
+}
+
+
+
+// ==========================================
+// SEGURIDAD HTML
+// ==========================================
+
+function escapeHTML(text) {
+
+    if (!text) return "";
+
+    return String(text)
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
+
+}
+
+
+
+// ==========================================
+// BOTÓN FILTRAR
+// ==========================================
+
+document
+    .getElementById("search-button")
+    .addEventListener(
+        "click",
+        cargarMusicos
+    );
+
+
+
+// ==========================================
+// CERRAR SESIÓN
+// ==========================================
+
+document
+    .getElementById("logout")
+    .addEventListener(
+        "click",
+        async function(event) {
+
+            event.preventDefault();
+
+
+            await supabaseClient
+                .auth
+                .signOut();
+
+
+            window.location.href =
+                "index.html";
+
+        }
+    );
+
+
+
+// ==========================================
+// CARGAR AL ENTRAR
+// ==========================================
+
+cargarMusicos();
+
+
+</script>
+
+
+</body>
+
+</html>
