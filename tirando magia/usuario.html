@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Perfil | Tirando Magia</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+    <!-- ==============================
+         NAVBAR
+         ============================== -->
+
+    <header>
+
+        <nav>
+
+            <a href="index.html" class="logo">
+                🎵 Tirando Magia
+            </a>
+
+            <div class="nav-links">
+
+                <a href="index.html">
+                    Inicio
+                </a>
+
+                <a href="buscar.html">
+                    Buscar músicos
+                </a>
+
+                <a href="#">
+                    Bandas
+                </a>
+
+                <a href="mensajes.html">
+                    💬 Mensajes
+                </a>
+
+                <a href="perfil.html">
+                    Mi perfil
+                </a>
+
+                <a href="#" id="logout">
+                    Cerrar sesión
+                </a>
+
+            </div>
+
+        </nav>
+
+    </header>
+
+
+    <!-- ==============================
+         PERFIL DEL USUARIO
+         ============================== -->
+
+    <main class="user-profile-page">
+
+        <div class="user-profile-box">
+
+            <a href="buscar.html" class="back-link">
+                ← Volver a buscar músicos
+            </a>
+
+
+            <div id="profile-content">
+
+                <p class="loading">
+                    Cargando perfil...
+                </p>
+
+            </div>
+
+        </div>
+
+    </main>
+
+
+    <!-- ==============================
+         FOOTER
+         ============================== -->
+
+    <footer>
+
+        <p>
+            © 2026 Tirando Magia — Encontrá tu banda.
+        </p>
+
+    </footer>
+
+
+    <script>
+
+        // ==========================================
+        // SUPABASE
+        // ==========================================
+
+        const SUPABASE_URL =
+            "https://buptjwmgwyeivjpcyvai.supabase.co";
+
+        const SUPABASE_KEY =
+            "sb_publishable_l9ibdIMfbbo8FJoyh3vs1w_-HJjSFI3";
+
+
+        const supabaseClient =
+            supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_KEY,
+                {
+                    auth: {
+                        persistSession: true,
+                        autoRefreshToken: true,
+                        detectSessionInUrl: true
+                    }
+                }
+            );
+
+
+        // ==========================================
+        // ELEMENTOS
+        // ==========================================
+
+        const profileContent =
+            document.getElementById("profile-content");
+
+
+        // ==========================================
+        // ESCAPAR HTML
+        // ==========================================
+
+        function escapeHTML(text) {
+
+            if (!text) return "";
+
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+
+        }
+
+
+        // ==========================================
+        // OBTENER ID DE LA URL
+        // ==========================================
+
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
+
+        const userId =
+            params.get("id");
+
+
+        // ==========================================
+        // CARGAR PERFIL
+        // ==========================================
+
+        async function cargarPerfil() {
+
+            if (!userId) {
+
+                profileContent.innerHTML = `
+                    <div class="no-profile">
+
+                        <h2>❌ Perfil no encontrado</h2>
+
+                        <p>
+                            No se indicó qué perfil querés ver.
+                        </p>
+
+                        <a
+                            href="buscar.html"
+                            class="button"
+                        >
+                            Volver a buscar músicos
+                        </a>
+
+                    </div>
+                `;
+
+                return;
+            }
+
+
+            // ======================================
+            // COMPROBAR SESIÓN
+            // ======================================
+
+            const {
+                data: sessionData
+            } =
+                await supabaseClient.auth.getSession();
+
+
+            if (!sessionData.session) {
+
+                window.location.href =
+                    "login.html";
+
+                return;
+            }
+
+
+            // ======================================
+            // BUSCAR PERFIL
+            // ======================================
+
+            const {
+                data: profile,
+                error
+            } =
+                await supabaseClient
+                    .from("profiles")
+                    .select("*")
+                    .eq("id", userId)
+                    .maybeSingle();
+
+
+            if (error) {
+
+                console.error(
+                    "Error cargando perfil:",
+                    error
+                );
+
+                profileContent.innerHTML = `
+                    <div class="no-profile">
+
+                        <h2>❌ Error</h2>
+
+                        <p>
+                            ${escapeHTML(error.message)}
+                        </p>
+
+                    </div>
+                `;
+
+                return;
+            }
+
+
+            // ======================================
+            // PERFIL NO EXISTE
+            // ======================================
+
+            if (!profile) {
+
+                profileContent.innerHTML = `
+                    <div class="no-profile">
+
+                        <h2>
+                            ❌ Perfil no encontrado
+                        </h2>
+
+                        <p>
+                            Este usuario todavía no creó su perfil.
+                        </p>
+
+                        <a
+                            href="buscar.html"
+                            class="button"
+                        >
+                            Volver a buscar músicos
+                        </a>
+
+                    </div>
+                `;
+
+                return;
+            }
+
+
+            // ======================================
+            // MOSTRAR PERFIL
+            // ======================================
+
+            mostrarPerfil(profile);
+
+        }
+
+
+        // ==========================================
+        // MOSTRAR PERFIL
+        // ==========================================
+
+        function mostrarPerfil(profile) {
+
+            const name =
+                escapeHTML(profile.name);
+
+            const instrument =
+                escapeHTML(profile.instrument);
+
+            const secondary =
+                escapeHTML(profile.secondary_instruments);
+
+            const level =
+                escapeHTML(profile.level);
+
+            const genres =
+                escapeHTML(profile.genres);
+
+            const description =
+                escapeHTML(profile.description);
+
+            const lookingFor =
+                escapeHTML(profile.looking_for);
+
+            const location =
+                escapeHTML(profile.location);
+
+            const favoriteArtists =
+                escapeHTML(profile.favorite_artists);
+
+            const instagram =
+                escapeHTML(profile.instagram);
+
+            const youtube =
+                escapeHTML(profile.youtube);
+
+
+            // ======================================
+            // FOTO
+            // ======================================
+
+            let photoHTML = `
+                <div class="user-profile-avatar">
+                    🎵
+                </div>
+            `;
+
+
+            if (profile.profile_photo) {
+
+                photoHTML = `
+                    <div class="user-profile-avatar">
+
+                        <img
+                            src="${escapeHTML(profile.profile_photo)}"
+                            alt="Foto de ${name}"
+                        >
+
+                    </div>
+                `;
+
+            }
+
+
+            // ======================================
+            // MAPS
+            // ======================================
+
+            let mapsHTML = "";
+
+
+            if (profile.maps_url && location) {
+
+                mapsHTML = `
+                    <a
+                        href="${escapeHTML(profile.maps_url)}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="profile-map-button"
+                    >
+                        🗺️ Ver zona en Google Maps
+                    </a>
+                `;
+
+            }
+
+
+            // ======================================
+            // INSTAGRAM
+            // ======================================
+
+            let instagramHTML = "";
+
+
+            if (instagram) {
+
+                let instagramURL =
+                    instagram.startsWith("http")
+                        ? instagram
+                        : "https://instagram.com/" +
+                          instagram.replace("@", "");
+
+
+                instagramHTML = `
+                    <a
+                        href="${escapeHTML(instagramURL)}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="profile-social-link"
+                    >
+                        📸 Instagram
+                    </a>
+                `;
+
+            }
+
+
+            // ======================================
+            // YOUTUBE
+            // ======================================
+
+            let youtubeHTML = "";
+
+
+            if (youtube) {
+
+                youtubeHTML = `
+                    <a
+                        href="${escapeHTML(youtube)}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="profile-social-link"
+                    >
+                        🎵 YouTube / SoundCloud
+                    </a>
+                `;
+
+            }
+
+
+            // ======================================
+            // PERFIL COMPLETO
+            // ======================================
+
+            profileContent.innerHTML = `
+
+                <div class="user-profile-header">
+
+                    ${photoHTML}
+
+                    <div class="user-profile-main">
+
+                        <h1>
+                            ${name || "Músico"}
+                        </h1>
+
+                        <p class="user-main-instrument">
+                            🎸 ${instrument || "Instrumento no especificado"}
+                        </p>
+
+                        ${
+                            level
+                            ? `
+                                <span class="profile-level">
+                                    ${level}
+                                </span>
+                            `
+                            : ""
+                        }
+
+                    </div>
+
+                </div>
+
+
+                <div class="user-profile-grid">
+
+
+                    <!-- INFORMACIÓN MUSICAL -->
+
+                    <section class="user-profile-section">
+
+                        <h2>
+                            🎵 Información musical
+                        </h2>
+
+                        ${
+                            secondary
+                            ? `
+                                <div class="profile-info">
+
+                                    <strong>
+                                        Otros instrumentos
+                                    </strong>
+
+                                    <p>
+                                        ${secondary}
+                                    </p>
+
+                                </div>
+                            `
+                            : ""
+                        }
+
+
+                        ${
+                            genres
+                            ? `
+                                <div class="profile-info">
+
+                                    <strong>
+                                        Géneros
+                                    </strong>
+
+                                    <p>
+                                        ${genres}
+                                    </p>
+
+                                </div>
+                            `
+                            : ""
+                        }
+
+
+                        ${
+                            favoriteArtists
+                            ? `
+                                <div class="profile-info">
+
+                                    <strong>
+                                        Artistas favoritos
+                                    </strong>
+
+                                    <p>
+                                        ${favoriteArtists}
+                                    </p>
+
+                                </div>
+                            `
+                            : ""
+                        }
+
+                    </section>
+
+
+                    <!-- SOBRE -->
+
+                    <section class="user-profile-section">
+
+                        <h2>
+                            👤 Sobre mí
+                        </h2>
+
+                        <p class="profile-description">
+
+                            ${
+                                description ||
+                                "Este músico todavía no agregó una descripción."
+                            }
+
+                        </p>
+
+                    </section>
+
+
+                    <!-- BUSCA -->
+
+                    ${
+                        lookingFor
+                        ? `
+                            <section class="user-profile-section">
+
+                                <h2>
+                                    🔎 Está buscando
+                                </h2>
+
+                                <p class="profile-looking">
+                                    ${lookingFor}
+                                </p>
+
+                            </section>
+                        `
+                        : ""
+                    }
+
+
+                    <!-- UBICACIÓN -->
+
+                    ${
+                        location
+                        ? `
+                            <section class="user-profile-section">
+
+                                <h2>
+                                    📍 Zona
+                                </h2>
+
+                                <p class="profile-location">
+                                    ${location}
+                                </p>
+
+                                ${mapsHTML}
+
+                            </section>
+                        `
+                        : ""
+                    }
+
+
+                    <!-- REDES -->
+
+                    ${
+                        instagram || youtube
+                        ? `
+                            <section class="user-profile-section">
+
+                                <h2>
+                                    🔗 Redes
+                                </h2>
+
+                                <div class="profile-socials">
+
+                                    ${instagramHTML}
+
+                                    ${youtubeHTML}
+
+                                </div>
+
+                            </section>
+                        `
+                        : ""
+                    }
+
+                </div>
+
+
+                <!-- ==================================
+                     BOTÓN DE MENSAJE
+                     ================================== -->
+
+                <div class="profile-actions">
+
+                    <button
+                        class="button"
+                        id="message-user"
+                        type="button"
+                    >
+                        💬 Mandarle un mensaje
+                    </button>
+
+                </div>
+
+            `;
+
+
+            // ======================================
+            // BOTÓN MENSAJE
+            // ======================================
+
+            document
+                .getElementById("message-user")
+                .addEventListener(
+                    "click",
+                    enviarMensaje
+                );
+
+        }
+
+
+        // ==========================================
+        // CREAR / ABRIR CONVERSACIÓN
+        // ==========================================
+
+        async function enviarMensaje() {
+
+            // Obtener sesión
+
+            const {
+                data: sessionData,
+                error: sessionError
+            } =
+                await supabaseClient.auth.getSession();
+
+
+            if (
+                sessionError ||
+                !sessionData.session
+            ) {
+
+                window.location.href =
+                    "login.html";
+
+                return;
+            }
+
+
+            const currentUserId =
+                sessionData.session.user.id;
+
+
+            // ======================================
+            // NO PERMITIR MENSAJEARSE A UNO MISMO
+            // ======================================
+
+            if (currentUserId === userId) {
+
+                alert(
+                    "No podés enviarte mensajes a vos mismo."
+                );
+
+                return;
+            }
+
+
+            // ======================================
+            // BUSCAR CONVERSACIÓN EXISTENTE
+            // ======================================
+
+            const {
+                data: existingConversation,
+                error: searchError
+            } =
+                await supabaseClient
+                    .from("conversations")
+                    .select("id")
+                    .or(
+                        `and(user_one.eq.${currentUserId},user_two.eq.${userId}),and(user_one.eq.${userId},user_two.eq.${currentUserId})`
+                    )
+                    .maybeSingle();
+
+
+            if (searchError) {
+
+                console.error(
+                    "Error buscando conversación:",
+                    searchError
+                );
+
+                alert(
+                    "No se pudo comprobar la conversación."
+                );
+
+                return;
+            }
+
+
+            // ======================================
+            // SI YA EXISTE → ABRIR CHAT
+            // ======================================
+
+            if (existingConversation) {
+
+                window.location.href =
+                    "chat.html?conversation=" +
+                    encodeURIComponent(
+                        existingConversation.id
+                    );
+
+                return;
+            }
+
+
+            // ======================================
+            // CREAR CONVERSACIÓN
+            // ======================================
+
+            const {
+                data: newConversation,
+                error: createError
+            } =
+                await supabaseClient
+                    .from("conversations")
+                    .insert({
+                        user_one: currentUserId,
+                        user_two: userId
+                    })
+                    .select("id")
+                    .single();
+
+
+            if (createError) {
+
+                console.error(
+                    "Error creando conversación:",
+                    createError
+                );
+
+                alert(
+                    "No se pudo crear la conversación."
+                );
+
+                return;
+            }
+
+
+            // ======================================
+            // ABRIR CHAT
+            // ======================================
+
+            window.location.href =
+                "chat.html?conversation=" +
+                encodeURIComponent(
+                    newConversation.id
+                );
+
+        }
+
+
+        // ==========================================
+        // LOGOUT
+        // ==========================================
+
+        document
+            .getElementById("logout")
+            .addEventListener(
+                "click",
+                async function (event) {
+
+                    event.preventDefault();
+
+                    await supabaseClient
+                        .auth
+                        .signOut();
+
+                    window.location.href =
+                        "index.html";
+
+                }
+            );
+
+
+        // ==========================================
+        // INICIAR
+        // ==========================================
+
+        cargarPerfil();
+
+    </script>
+
+</body>
+
+</html>
