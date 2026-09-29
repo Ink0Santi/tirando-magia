@@ -1,0 +1,183 @@
+```html
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Crear cuenta | Tirando Magia</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Barra de navegación -->
+    <header>
+        <nav>
+
+            <div class="logo">
+                🎵 Tirando Magia
+            </div>
+
+            <div class="nav-links">
+                <a href="index.html">Inicio</a>
+                <a href="#">Buscar músicos</a>
+                <a href="#">Bandas</a>
+                <a href="login.html">Iniciar sesión</a>
+            </div>
+
+        </nav>
+    </header>
+
+
+    <!-- Registro -->
+    <main class="login-page">
+
+        <div class="login-box">
+
+            <h1>Crear tu cuenta</h1>
+
+            <p>
+                Empezá a encontrar músicos y formar tu banda.
+            </p>
+
+
+            <!-- FORMULARIO DE REGISTRO -->
+            <form id="register-form">
+
+                <!-- Nombre -->
+                <label for="name">
+                    Nombre
+                </label>
+
+                <input
+                    type="text"
+                    id="name"
+                    placeholder="Tu nombre"
+                    required
+                >
+
+
+                <!-- Email -->
+                <label for="email">
+                    Email
+                </label>
+
+                <input
+                    type="email"
+                    id="email"
+                    placeholder="tuemail@ejemplo.com"
+                    required
+                >
+
+
+                <!-- Contraseña -->
+                <label for="password">
+                    Contraseña
+                </label>
+
+                <input
+                    type="password"
+                    id="password"
+                    placeholder="Creá una contraseña"
+                    minlength="6"
+                    required
+                >
+
+
+                <!-- Instrumento -->
+                <label for="instrument">
+                    Instrumento principal
+                </label>
+
+                <select id="instrument" required>
+
+                    <option value="">
+                        Seleccioná tu instrumento
+                    </option>
+
+                    <option value="guitarra">
+                        🎸 Guitarra
+                    </option>
+
+                    <option value="bajo">
+                        🎸 Bajo
+                    </option>
+
+                    <option value="bateria">
+                        🥁 Batería
+                    </option>
+
+                    <option value="voz">
+                        🎤 Voz
+                    </option>
+
+                    <option value="teclado">
+                        🎹 Teclado
+                    </option>
+
+                    <option value="violin">
+                        🎻 Violín
+                    </option>
+
+                    <option value="saxofon">
+                        🎷 Saxofón
+                    </option>
+
+                    <option value="otro">
+                        🎵 Otro
+                    </option>
+
+                </select>
+
+
+                <!-- Botón -->
+                <button type="submit">
+                    Crear cuenta
+                </button>
+
+            </form>
+
+
+            <!-- Separador -->
+            <div class="login-divider">
+                <span>o</span>
+            </div>
+
+
+            <!-- Login -->
+            <p class="register-text">
+                ¿Ya tenés una cuenta?
+            </p>
+
+            <a href="login.html" class="register-link">
+                Iniciar sesión
+            </a>
+
+        </div>
+
+    </main>
+
+
+    <!-- Footer -->
+    <footer>
+
+        <p>
+            © 2026 Tirando Magia — Encontrá tu banda.
+        </p>
+
+    </footer>
+
+
+    <!-- SUPABASE -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- NUESTRO JAVASCRIPT -->
+    <script src="script.js"></script>
+
+</body>
+
+</html>
+```

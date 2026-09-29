@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Verificar cuenta | Tirando Magia</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Barra de navegación -->
+    <header>
+        <nav>
+
+            <div class="logo">
+                🎵 Tirando Magia
+            </div>
+
+            <div class="nav-links">
+                <a href="index.html">Inicio</a>
+                <a href="#">Buscar músicos</a>
+                <a href="#">Bandas</a>
+                <a href="login.html">Iniciar sesión</a>
+            </div>
+
+        </nav>
+    </header>
+
+
+    <!-- Verificación -->
+    <main class="login-page">
+
+        <div class="login-box">
+
+            <h1>Verificá tu email</h1>
+
+            <p>
+                Te enviamos un código de 8 dígitos a tu email.
+                Ingresalo para terminar de crear tu cuenta.
+            </p>
+
+
+            <form id="verify-form">
+
+                <label for="verification-code">
+                    Código de verificación
+                </label>
+
+                <input
+                    type="text"
+                    id="verification-code"
+                    placeholder="12345678"
+                    maxlength="8"
+                    minlength="8"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                    pattern="[0-9]{8}"
+                    required
+                >
+
+
+                <button type="submit">
+                    Verificar cuenta
+                </button>
+
+            </form>
+
+
+            <div class="login-divider">
+                <span>o</span>
+            </div>
+
+
+            <p class="register-text">
+                ¿Te equivocaste de email?
+            </p>
+
+            <a href="registro.html" class="register-link">
+                Volver al registro
+            </a>
+
+        </div>
+
+    </main>
+
+
+    <!-- Footer -->
+    <footer>
+        <p>
+            © 2026 Tirando Magia — Encontrá tu banda.
+        </p>
+    </footer>
+
+
+    <!-- SUPABASE -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- NUESTRO JAVASCRIPT -->
+    <script src="script.js"></script>
+
+</body>
+
+</html>
