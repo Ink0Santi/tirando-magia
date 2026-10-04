@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Mensajes | Tirando Magia</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header class="site-header" id="site-header" data-active="mensajes"></header>
+
+    <main class="page">
+        <div class="container-narrow">
+
+            <div class="page-head">
+                <div>
+                    <h1>💬 Mensajes</h1>
+                    <p>Hablá con otros músicos y profes.</p>
+                </div>
+            </div>
+
+            <div class="search-box" style="margin-bottom: 16px;" id="search-wrapper" hidden>
+                <span aria-hidden="true">🔎</span>
+                <input type="search" class="input" id="conversation-search" placeholder="Buscar conversación..." aria-label="Buscar conversación">
+            </div>
+
+            <div class="conversation-list" id="conversation-list">
+                <div class="card skeleton" style="min-height: 76px;"></div>
+                <div class="card skeleton" style="min-height: 76px;"></div>
+                <div class="card skeleton" style="min-height: 76px;"></div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-inner">
+            <span>🎵 Tirando Magia</span>
+            <span>© 2026 — Encontrá tu banda o tu profe.</span>
+        </div>
+    </footer>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+
+    <script>
+        const list = document.getElementById("conversation-list");
+        const searchInput = document.getElementById("conversation-search");
+        const esc = TM.escapeHTML;
+
+        let userId = null;
+        let items = [];
+
+
+        // ==========================================
+        // RENDER
+        // ==========================================
+
+        function render() {
+            const query = TM.normalize(searchInput.value);
+            const visible = items.filter(item => !query || TM.normalize(item.profile.name).includes(query));
+
+            if (!items.length) {
+                list.innerHTML = `
+                    <div class="card empty-state">
+                        <div class="empty-icon">💬</div>
+                        <h2>Todavía no tenés conversaciones</h2>
+                        <p>Buscá músicos o profes y mandales un mensaje desde su perfil.</p>
+                        <a href="buscar.html" class="btn btn-primary">🔎 Buscar músicos</a>
+                    </div>
+                `;
+                return;
+            }
+
+            if (!visible.length) {
+                list.innerHTML = `<p class="muted" style="padding: 30px; text-align: center;">No hay conversaciones con ese nombre.</p>`;
+                return;
+            }
+
+            list.innerHTML = visible.map(({ conversation, profile, lastMessage }) => {
+                const teacher = TM.isTeacher(profile);
+
+                const preview = lastMessage
+                    ? (lastMessage.sender_id === userId ? "Vos: " : "") + lastMessage.content
+                    : "";
+
+                return `
+                    <a class="card conversation" href="chat.html?conversation=${encodeURIComponent(conversation.id)}">
+
+                        <div class="avatar avatar-sm ${teacher ? "teacher" : ""}">${TM.avatarHTML(profile)}</div>
+
+                        <div class="conversation-body">
+                            <div class="conversation-top">
+                                <h3 class="conversation-name">${esc(profile.name || "Usuario")}</h3>
+                                <span class="conversation-time">${TM.formatShortDate(lastMessage ? lastMessage.created_at : conversation.created_at)}</span>
+                            </div>
+
+                            <p class="conversation-sub">
+                                ${TM.instrumentEmoji(profile.instrument)} ${esc(TM.canonicalInstrument(profile.instrument) || "Músico")}
+                                ${teacher ? `<span class="badge badge-teacher">🎓 Profe</span>` : ""}
+                            </p>
+
+                            <p class="conversation-preview ${preview ? "" : "empty"}">
+                                ${esc(preview || "Todavía no hay mensajes")}
+                            </p>
+                        </div>
+
+                    </a>
+                `;
+            }).join("");
+        }
+
+        searchInput.addEventListener("input", render);
+
+
+        // ==========================================
+        // CARGAR
+        // ==========================================
+
+        async function cargar() {
+            const { data: conversations, error } = await TM.db
+                .from("conversations")
+                .select("id, user_one, user_two, created_at")
+                .or(`user_one.eq.${userId},user_two.eq.${userId}`);
+
+            if (error) {
+                console.error("Error cargando conversaciones:", error);
+                list.innerHTML = `
+                    <div class="card empty-state">
+                        <div class="empty-icon">⚠️</div>
+                        <h2>No se pudieron cargar los mensajes</h2>
+                        <p>${esc(TM.friendlyError(error))}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            if (!conversations.length) {
+                items = [];
+                render();
+                return;
+            }
+
+            const otherId = c => (c.user_one === userId ? c.user_two : c.user_one);
+            const conversationIds = conversations.map(c => c.id);
+
+            // Dos consultas en total (antes eran dos por cada conversación)
+            const [profilesResult, messagesResult] = await Promise.all([
+                TM.db.from("profiles").select("*").in("id", [...new Set(conversations.map(otherId))]),
+                TM.db.from("messages")
+                    .select("conversation_id, content, created_at, sender_id")
+                    .in("conversation_id", conversationIds)
+                    .order("created_at", { ascending: false })
+                    .limit(1000)
+            ]);
+
+            const profiles = new Map((profilesResult.data || []).map(p => [p.id, p]));
+
+            const lastMessages = new Map();
+            (messagesResult.data || []).forEach(message => {
+                if (!lastMessages.has(message.conversation_id)) {
+                    lastMessages.set(message.conversation_id, message);
+                }
+            });
+
+            items = conversations
+                .map(conversation => ({
+                    conversation,
+                    profile: profiles.get(otherId(conversation)) || { id: otherId(conversation) },
+                    lastMessage: lastMessages.get(conversation.id) || null
+                }))
+                .sort((a, b) => {
+                    const dateA = new Date(a.lastMessage ? a.lastMessage.created_at : a.conversation.created_at);
+                    const dateB = new Date(b.lastMessage ? b.lastMessage.created_at : b.conversation.created_at);
+                    return dateB - dateA;
+                });
+
+            document.getElementById("search-wrapper").hidden = items.length < 5;
+
+            render();
+        }
+
+
+        // ==========================================
+        // INICIAR + TIEMPO REAL
+        // ==========================================
+
+        async function iniciar() {
+            const session = await TM.requireSession();
+            if (!session) return;
+
+            userId = session.user.id;
+
+            await cargar();
+
+            // Cuando llega un mensaje nuevo, recargamos la lista
+            TM.db
+                .channel("inbox-" + userId)
+                .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, TM.debounce(cargar, 400))
+                .subscribe();
+        }
+
+        iniciar();
+    </script>
+
+</body>
+
+</html>

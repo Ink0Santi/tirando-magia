@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Mi perfil | Tirando Magia</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header class="site-header" id="site-header" data-active="perfil"></header>
+
+    <main class="page">
+        <div class="container-narrow">
+
+            <div class="page-head">
+                <div>
+                    <h1>Tu perfil</h1>
+                    <p>Contale a otros músicos quién sos y qué música hacés.</p>
+                </div>
+                <a class="btn btn-secondary btn-sm" id="view-public" hidden>👁️ Ver mi perfil público</a>
+            </div>
+
+            <div id="welcome" class="alert alert-info" style="margin-bottom: 18px;" hidden>
+                🎉 ¡Bienvenido a Tirando Magia! Completá tu perfil para que otros te puedan encontrar.
+            </div>
+
+            <form id="profile-form" class="profile-form" novalidate>
+
+                <!-- TIPO DE PERFIL -->
+                <section class="card form-section">
+                    <h2>Tipo de perfil</h2>
+                    <p class="section-desc">Si das clases, activá el perfil de profe para aparecer en la búsqueda de profesores.</p>
+
+                    <div class="role-options">
+                        <label class="role-option">
+                            <input type="radio" name="role" value="musico" checked>
+                            <span class="role-card">
+                                <span class="role-emoji">🎸</span>
+                                <strong>Músico</strong>
+                                <small>Busco banda, proyectos o gente para tocar</small>
+                            </span>
+                        </label>
+
+                        <label class="role-option teacher">
+                            <input type="radio" name="role" value="profesor">
+                            <span class="role-card">
+                                <span class="role-emoji">🎓</span>
+                                <strong>Profesor/a</strong>
+                                <small>Doy clases y busco alumnos</small>
+                            </span>
+                        </label>
+                    </div>
+                </section>
+
+
+                <!-- BÁSICO -->
+                <section class="card form-section">
+                    <h2>Lo básico</h2>
+                    <p class="section-desc">Esto es lo primero que ven los demás en la búsqueda.</p>
+
+                    <div class="avatar-edit">
+                        <div class="avatar avatar-lg" id="photo-preview"><span aria-hidden="true">👤</span></div>
+
+                        <div class="avatar-actions">
+                            <div class="btn-row">
+                                <label for="photo-input" class="btn btn-secondary btn-sm">📷 Elegir foto</label>
+                                <button type="button" class="btn btn-ghost btn-sm" id="remove-photo" hidden>Quitar</button>
+                            </div>
+                            <span class="field-hint">JPG o PNG. Se ajusta automáticamente.</span>
+                            <input type="file" id="photo-input" accept="image/*" hidden>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="name">Nombre o nombre artístico *</label>
+                            <input type="text" id="name" placeholder="Ej: Santiago" maxlength="60" required>
+                        </div>
+
+                        <div class="field">
+                            <label for="instrument" id="instrument-label">Instrumento principal *</label>
+                            <select id="instrument" required></select>
+                        </div>
+
+                        <div class="field">
+                            <label for="secondary-instruments">Otros instrumentos</label>
+                            <input type="text" id="secondary-instruments" placeholder="Ej: Piano, guitarra acústica..." maxlength="120">
+                        </div>
+
+                        <div class="field">
+                            <label for="level">Nivel musical</label>
+                            <select id="level"></select>
+                        </div>
+                    </div>
+                </section>
+
+
+                <!-- CLASES (solo profes) -->
+                <section class="card form-section teacher-section" id="teacher-section" hidden>
+                    <h2>🎓 Tus clases</h2>
+                    <p class="section-desc">Los alumnos van a ver esta información en tu perfil y en la búsqueda.</p>
+
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="class-price">Precio por clase (ARS)</label>
+                            <div class="input-prefix">
+                                <span>$</span>
+                                <input type="number" id="class-price" placeholder="Ej: 15000" min="0" step="500" inputmode="numeric">
+                            </div>
+                            <span class="field-hint">Dejalo vacío si preferís arreglarlo por mensaje.</span>
+                        </div>
+
+                        <div class="field">
+                            <label for="class-mode">Modalidad</label>
+                            <select id="class-mode"></select>
+                        </div>
+
+                        <div class="field span-2">
+                            <span class="label">Niveles que enseñás</span>
+                            <div class="check-chips" id="teaching-levels"></div>
+                        </div>
+
+                        <div class="field span-2">
+                            <div class="field-head">
+                                <label for="teaching-experience">Experiencia y metodología</label>
+                                <span class="char-count" id="experience-count">0/600</span>
+                            </div>
+                            <textarea id="teaching-experience" maxlength="600"
+                                      placeholder="Ej: Doy clases hace 8 años. Trabajo con canciones que te gusten, lectura, técnica e improvisación..."></textarea>
+                        </div>
+                    </div>
+                </section>
+
+
+                <!-- MÚSICA -->
+                <section class="card form-section">
+                    <h2>Tu música</h2>
+                    <p class="section-desc">Ayudá a que te encuentre gente con tus mismos gustos.</p>
+
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="genres">Géneros musicales</label>
+                            <input type="text" id="genres" placeholder="Ej: Rock, Punk, Metal..." maxlength="150">
+                            <span class="field-hint">Separalos con comas.</span>
+                        </div>
+
+                        <div class="field">
+                            <label for="favorite-artists">Artistas o bandas favoritas</label>
+                            <input type="text" id="favorite-artists" placeholder="Ej: Green Day, Metallica, Cerati..." maxlength="200">
+                        </div>
+
+                        <div class="field span-2">
+                            <label for="looking-for">¿Qué estás buscando?</label>
+                            <select id="looking-for"></select>
+                        </div>
+
+                        <div class="field span-2">
+                            <div class="field-head">
+                                <label for="description">Sobre vos</label>
+                                <span class="char-count" id="description-count">0/500</span>
+                            </div>
+                            <textarea id="description" maxlength="500"
+                                      placeholder="Contá quién sos, qué música hacés y qué estás buscando..."></textarea>
+                        </div>
+                    </div>
+                </section>
+
+
+                <!-- ZONA Y REDES -->
+                <section class="card form-section">
+                    <h2>Zona y redes</h2>
+                    <p class="section-desc">Poné solo un barrio o ciudad, nunca tu dirección.</p>
+
+                    <div class="form-grid">
+                        <div class="field span-2">
+                            <label for="location">📍 Zona</label>
+                            <input type="text" id="location" placeholder="Ej: Caballito, Buenos Aires" maxlength="80">
+                        </div>
+
+                        <div class="field">
+                            <label for="instagram">Instagram</label>
+                            <input type="text" id="instagram" placeholder="@tuusuario" maxlength="100">
+                        </div>
+
+                        <div class="field">
+                            <label for="youtube">YouTube / SoundCloud / Spotify</label>
+                            <input type="url" id="youtube" placeholder="https://..." maxlength="300">
+                        </div>
+                    </div>
+                </section>
+
+
+                <!-- GUARDAR -->
+                <div class="form-actions">
+                    <span class="save-status" id="save-status">Cargando perfil...</span>
+                    <button type="submit" class="btn btn-primary" id="save-button" disabled>💾 Guardar perfil</button>
+                </div>
+
+            </form>
+
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-inner">
+            <span>🎵 Tirando Magia</span>
+            <span>© 2026 — Encontrá tu banda o tu profe.</span>
+        </div>
+    </footer>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+
+    <script>
+        const form = document.getElementById("profile-form");
+        const saveButton = document.getElementById("save-button");
+        const saveStatus = document.getElementById("save-status");
+        const photoInput = document.getElementById("photo-input");
+        const photoPreview = document.getElementById("photo-preview");
+        const removePhotoButton = document.getElementById("remove-photo");
+        const teacherSection = document.getElementById("teacher-section");
+        const viewPublic = document.getElementById("view-public");
+
+        const $ = id => document.getElementById(id);
+
+        let session = null;
+        let currentPhoto = "";      // URL guardada
+        let newPhotoBlob = null;    // foto nueva pendiente de subir
+        let dirty = false;
+
+
+        // ==========================================
+        // OPCIONES
+        // ==========================================
+
+        TM.fillSelect($("instrument"), TM.INSTRUMENTS, "Seleccioná un instrumento");
+        TM.fillSelect($("level"), TM.LEVELS, "Seleccioná tu nivel");
+        TM.fillSelect($("looking-for"), TM.LOOKING_FOR, "Seleccioná una opción");
+        TM.fillSelect($("class-mode"), TM.CLASS_MODES, "Seleccioná la modalidad");
+
+        $("teaching-levels").innerHTML = TM.LEVELS.map(level => `
+            <label class="check-chip">
+                <input type="checkbox" name="teaching-level" value="${level.value}">
+                <span>${TM.optionLabel(level)}</span>
+            </label>
+        `).join("");
+
+        if (new URLSearchParams(location.search).get("bienvenida")) {
+            $("welcome").hidden = false;
+        }
+
+
+        // ==========================================
+        // ESTADO
+        // ==========================================
+
+        function selectedRole() {
+            return form.querySelector("input[name='role']:checked").value;
+        }
+
+        function actualizarRol() {
+            const teacher = selectedRole() === "profesor";
+            teacherSection.hidden = !teacher;
+            $("instrument-label").textContent = teacher ? "Instrumento que enseñás *" : "Instrumento principal *";
+        }
+
+        function setStatus(text, type = "") {
+            saveStatus.textContent = text;
+            saveStatus.className = "save-status " + type;
+        }
+
+        function markDirty() {
+            if (!session) return;
+            dirty = true;
+            setStatus("Tenés cambios sin guardar", "dirty");
+        }
+
+        function actualizarContadores() {
+            $("description-count").textContent = `${$("description").value.length}/500`;
+            $("experience-count").textContent = `${$("teaching-experience").value.length}/600`;
+        }
+
+        form.querySelectorAll("input[name='role']").forEach(input => {
+            input.addEventListener("change", actualizarRol);
+        });
+
+        form.addEventListener("input", () => {
+            markDirty();
+            actualizarContadores();
+        });
+
+        form.addEventListener("change", markDirty);
+
+        window.addEventListener("beforeunload", event => {
+            if (dirty) event.preventDefault();
+        });
+
+
+        // ==========================================
+        // FOTO
+        // ==========================================
+
+        function mostrarFoto(src) {
+            const url = src && (src.startsWith("blob:") ? src : TM.safeUrl(src));
+
+            photoPreview.innerHTML = url
+                ? `<img src="${TM.escapeHTML(url)}" alt="Foto de perfil">`
+                : `<span aria-hidden="true">👤</span>`;
+
+            removePhotoButton.hidden = !url;
+        }
+
+        // Achica la imagen antes de subirla (máx. 512px, JPG)
+        function resizeImage(file, max = 512) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const url = URL.createObjectURL(file);
+
+                img.onload = () => {
+                    const scale = Math.min(1, max / Math.max(img.width, img.height));
+                    const canvas = document.createElement("canvas");
+                    canvas.width = Math.round(img.width * scale);
+                    canvas.height = Math.round(img.height * scale);
+                    canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+                    URL.revokeObjectURL(url);
+
+                    canvas.toBlob(
+                        blob => blob ? resolve(blob) : reject(new Error("No se pudo procesar la imagen.")),
+                        "image/jpeg",
+                        0.85
+                    );
+                };
+
+                img.onerror = () => {
+                    URL.revokeObjectURL(url);
+                    reject(new Error("El archivo no es una imagen válida."));
+                };
+
+                img.src = url;
+            });
+        }
+
+        photoInput.addEventListener("change", async () => {
+            const file = photoInput.files[0];
+            photoInput.value = "";
+            if (!file) return;
+
+            if (!file.type.startsWith("image/")) {
+                TM.toast("Elegí un archivo de imagen.", "error");
+                return;
+            }
+
+            if (file.size > 15 * 1024 * 1024) {
+                TM.toast("La imagen es muy pesada (máximo 15 MB).", "error");
+                return;
+            }
+
+            try {
+                newPhotoBlob = await resizeImage(file);
+                mostrarFoto(URL.createObjectURL(newPhotoBlob));
+                markDirty();
+            } catch (error) {
+                TM.toast(error.message, "error");
+            }
+        });
+
+        removePhotoButton.addEventListener("click", () => {
+            newPhotoBlob = null;
+            currentPhoto = "";
+            mostrarFoto("");
+            markDirty();
+        });
+
+        async function subirFoto(userId) {
+            const path = `${userId}/avatar-${Date.now()}.jpg`;
+
+            const { error } = await TM.db.storage
+                .from("avatars")
+                .upload(path, newPhotoBlob, { contentType: "image/jpeg", upsert: true });
+
+            if (error) throw error;
+
+            return TM.db.storage.from("avatars").getPublicUrl(path).data.publicUrl;
+        }
+
+
+        // ==========================================
+        // CARGAR
+        // ==========================================
+
+        function cargarEnFormulario(data) {
+            const role = data.role === "profesor" ? "profesor" : "musico";
+            form.querySelector(`input[name='role'][value='${role}']`).checked = true;
+
+            $("name").value = data.name || "";
+            $("instrument").value = TM.canonicalInstrument(data.instrument);
+            $("secondary-instruments").value = data.secondary_instruments || "";
+            $("level").value = data.level || "";
+            $("genres").value = data.genres || "";
+            $("favorite-artists").value = data.favorite_artists || "";
+            $("looking-for").value = data.looking_for || "";
+            $("description").value = data.description || "";
+            $("location").value = data.location || "";
+            $("instagram").value = data.instagram || "";
+            $("youtube").value = data.youtube || "";
+
+            $("class-price").value = data.class_price || "";
+            $("class-mode").value = data.class_mode || "";
+            $("teaching-experience").value = data.teaching_experience || "";
+
+            const levels = TM.splitList(data.teaching_levels);
+            form.querySelectorAll("input[name='teaching-level']").forEach(input => {
+                input.checked = levels.includes(input.value);
+            });
+
+            currentPhoto = data.profile_photo || "";
+            mostrarFoto(currentPhoto);
+
+            actualizarRol();
+            actualizarContadores();
+        }
+
+        async function cargarPerfil() {
+            session = await TM.requireSession();
+            if (!session) return;
+
+            const { data: profile, error } = await TM.db
+                .from("profiles")
+                .select("*")
+                .eq("id", session.user.id)
+                .maybeSingle();
+
+            if (error) {
+                console.error("Error cargando perfil:", error);
+                setStatus("❌ " + TM.friendlyError(error));
+                return;
+            }
+
+            if (profile) {
+                cargarEnFormulario(profile);
+                viewPublic.href = "usuario.html?id=" + encodeURIComponent(session.user.id);
+                viewPublic.hidden = false;
+            } else {
+                // Todavía no tiene perfil: usamos los datos del registro
+                cargarEnFormulario(session.user.user_metadata || {});
+            }
+
+            dirty = false;
+            saveButton.disabled = false;
+            setStatus(profile ? "Todo guardado" : "Completá tu perfil y guardalo", profile ? "saved" : "dirty");
+        }
+
+
+        // ==========================================
+        // GUARDAR
+        // ==========================================
+
+        function leerFormulario() {
+            const location = $("location").value.trim();
+            const price = parseInt($("class-price").value, 10);
+
+            const teachingLevels = [...form.querySelectorAll("input[name='teaching-level']:checked")]
+                .map(input => input.value)
+                .join(", ");
+
+            return {
+                id: session.user.id,
+                role: selectedRole(),
+                name: $("name").value.trim(),
+                instrument: $("instrument").value,
+                secondary_instruments: $("secondary-instruments").value.trim(),
+                level: $("level").value,
+                genres: TM.splitList($("genres").value).join(", "),
+                favorite_artists: $("favorite-artists").value.trim(),
+                looking_for: $("looking-for").value,
+                description: $("description").value.trim(),
+                location,
+                maps_url: TM.mapsUrl(location),
+                instagram: $("instagram").value.trim(),
+                youtube: $("youtube").value.trim(),
+                class_price: Number.isFinite(price) && price > 0 ? price : null,
+                class_mode: $("class-mode").value,
+                teaching_levels: teachingLevels,
+                teaching_experience: $("teaching-experience").value.trim(),
+                updated_at: new Date().toISOString()
+            };
+        }
+
+        function validar(data) {
+            if (!data.name) return { field: "name", message: "Poné tu nombre." };
+            if (!data.instrument) return { field: "instrument", message: "Elegí tu instrumento." };
+
+            if (data.youtube && !TM.safeUrl(data.youtube)) {
+                return { field: "youtube", message: "El link de YouTube / SoundCloud no es válido." };
+            }
+
+            return null;
+        }
+
+        form.addEventListener("submit", async event => {
+            event.preventDefault();
+            if (!session) return;
+
+            const data = leerFormulario();
+            const invalid = validar(data);
+
+            if (invalid) {
+                TM.toast(invalid.message, "error");
+                $(invalid.field).focus();
+                return;
+            }
+
+            TM.setBusy(saveButton, true, "Guardando...");
+            setStatus("Guardando...");
+
+            // Foto
+            data.profile_photo = currentPhoto || null;
+
+            if (newPhotoBlob) {
+                try {
+                    data.profile_photo = await subirFoto(session.user.id);
+                    currentPhoto = data.profile_photo;
+                    newPhotoBlob = null;
+                } catch (error) {
+                    console.error("Error subiendo foto:", error);
+                    TM.toast("No se pudo subir la foto. Revisá que exista el bucket \"avatars\" (ver supabase.sql).", "error", 7000);
+                }
+            }
+
+            // Perfil
+            let { error } = await TM.db.from("profiles").upsert(data, { onConflict: "id" });
+
+            // Si la base todavía no tiene las columnas de profe, guardamos lo básico
+            if (TM.isMissingColumn(error)) {
+                const basic = { ...data };
+                TM.EXTENDED_FIELDS.forEach(key => delete basic[key]);
+
+                ({ error } = await TM.db.from("profiles").upsert(basic, { onConflict: "id" }));
+
+                if (!error) {
+                    TM.toast("Se guardó tu perfil, pero para guardar el rol de profe y las clases hay que ejecutar supabase.sql.", "error", 8000);
+                }
+            }
+
+            TM.setBusy(saveButton, false);
+
+            if (error) {
+                console.error("Error guardando perfil:", error);
+                setStatus("❌ " + TM.friendlyError(error));
+                TM.toast(TM.friendlyError(error), "error");
+                return;
+            }
+
+            dirty = false;
+            setStatus("✓ Perfil guardado", "saved");
+            TM.toast("✅ ¡Perfil guardado!", "success");
+
+            viewPublic.href = "usuario.html?id=" + encodeURIComponent(session.user.id);
+            viewPublic.hidden = false;
+            $("welcome").hidden = true;
+        });
+
+
+        cargarPerfil();
+    </script>
+
+</body>
+
+</html>

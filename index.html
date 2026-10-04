@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Tirando Magia — Encontrá músicos y profes</title>
+    <meta name="description" content="Encontrá músicos, formá tu banda o conseguí un profe de música en Tirando Magia.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header class="site-header" id="site-header" data-active="inicio"></header>
+
+    <main>
+
+        <!-- HERO -->
+        <section class="hero">
+            <div class="container">
+
+                <span class="eyebrow">🎵 Músicos y profes de música</span>
+
+                <h1>
+                    Encontrá músicos.<br>
+                    <span>Formá tu banda.</span>
+                </h1>
+
+                <p class="hero-lead">
+                    Conectá con músicos que compartan tu estilo, o encontrá
+                    un profe para aprender el instrumento que siempre quisiste tocar.
+                </p>
+
+                <div class="hero-actions">
+                    <a href="buscar.html?tipo=musico" class="btn btn-primary btn-lg">🔎 Buscar músicos</a>
+                    <a href="buscar.html?tipo=profesor" class="btn btn-secondary btn-lg">🎓 Encontrar un profe</a>
+                </div>
+
+                <div class="hero-stats" id="hero-stats" hidden>
+                    <div><strong id="stat-musicians">–</strong>músicos</div>
+                    <div><strong id="stat-teachers">–</strong>profes</div>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- DOS CAMINOS -->
+        <section class="section">
+            <div class="container">
+
+                <div class="section-head">
+                    <h2>¿Qué venís a buscar?</h2>
+                    <p>Tirando Magia es para quienes tocan y para quienes enseñan.</p>
+                </div>
+
+                <div class="paths">
+
+                    <a class="card path-card" href="registro.html?rol=musico" data-path="musico">
+                        <span class="path-emoji">🎸</span>
+                        <h3>Soy músico</h3>
+                        <p>Armá tu perfil, encontrá gente con tus gustos y formá una banda o un proyecto.</p>
+                        <span class="path-link">Crear perfil de músico →</span>
+                    </a>
+
+                    <a class="card path-card teacher" href="registro.html?rol=profesor" data-path="profesor">
+                        <span class="path-emoji">🎓</span>
+                        <h3>Doy clases</h3>
+                        <p>Publicá tus clases con precio y modalidad, y recibí mensajes de alumnos interesados.</p>
+                        <span class="path-link">Crear perfil de profe →</span>
+                    </a>
+
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- INSTRUMENTOS -->
+        <section class="section section-alt">
+            <div class="container">
+
+                <div class="section-head">
+                    <h2>Buscá por instrumento</h2>
+                    <p>Elegí un instrumento y mirá quién lo toca o lo enseña.</p>
+                </div>
+
+                <div class="instrument-grid" id="instrument-grid"></div>
+
+            </div>
+        </section>
+
+
+        <!-- CÓMO FUNCIONA -->
+        <section class="section">
+            <div class="container">
+
+                <div class="section-head">
+                    <h2>¿Cómo funciona?</h2>
+                </div>
+
+                <div class="steps">
+
+                    <div class="card step">
+                        <div class="step-num">1</div>
+                        <h3>Creá tu cuenta</h3>
+                        <p>Registrate gratis como músico o como profe.</p>
+                    </div>
+
+                    <div class="card step">
+                        <div class="step-num">2</div>
+                        <h3>Armá tu perfil</h3>
+                        <p>Instrumento, géneros, zona, redes y, si das clases, precio y modalidad.</p>
+                    </div>
+
+                    <div class="card step">
+                        <div class="step-num">3</div>
+                        <h3>Conectá</h3>
+                        <p>Explorá perfiles y mandá un mensaje directo para empezar a tocar.</p>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- PROFES -->
+        <section class="section">
+            <div class="container">
+
+                <div class="card teacher-promo">
+
+                    <div>
+                        <span class="badge badge-teacher">🎓 Para profes</span>
+                        <h2 style="margin-top: 14px;">¿Das clases de música?</h2>
+                        <p>
+                            Creá tu perfil de profe y aparecé en la búsqueda de alumnos
+                            que quieren aprender tu instrumento.
+                        </p>
+                        <a href="registro.html?rol=profesor" class="btn btn-teacher" id="teacher-cta">
+                            Publicar mis clases
+                        </a>
+                    </div>
+
+                    <ul class="promo-list">
+                        <li><span>💲</span> Mostrá tu precio por clase y tu modalidad: presencial, online o ambas.</li>
+                        <li><span>📈</span> Indicá qué niveles enseñás y tu experiencia.</li>
+                        <li><span>💬</span> Los alumnos te escriben directo por mensaje.</li>
+                    </ul>
+
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- CTA FINAL -->
+        <section class="cta">
+            <div class="container">
+                <h2>Tu próxima banda puede estar acá.</h2>
+                <p>Encontrá músicos, conectá con ellos y empezá a hacer música.</p>
+                <a href="registro.html" class="btn btn-primary btn-lg" id="main-action">Crear cuenta gratis</a>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-inner">
+            <span>🎵 Tirando Magia</span>
+            <span>© 2026 — Encontrá tu banda o tu profe.</span>
+        </div>
+    </footer>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+
+    <script>
+        // Instrumentos
+        document.getElementById("instrument-grid").innerHTML = TM.INSTRUMENTS
+            .filter(item => item.value !== "Otro")
+            .map(item => `
+                <a class="card instrument-tile" href="buscar.html?instrumento=${encodeURIComponent(item.value)}">
+                    ${item.emoji}
+                    <span>${TM.escapeHTML(item.value)}</span>
+                </a>
+            `)
+            .join("");
+
+
+        // Botones según la sesión
+        async function actualizarAcciones() {
+            const session = await TM.getSession();
+            if (!session) return;
+
+            const mainAction = document.getElementById("main-action");
+            mainAction.href = "buscar.html";
+            mainAction.textContent = "🔎 Explorar músicos";
+
+            document.getElementById("teacher-cta").href = "perfil.html";
+
+            document.querySelectorAll("[data-path]").forEach(card => {
+                card.href = "perfil.html";
+                card.querySelector(".path-link").textContent =
+                    card.dataset.path === "profesor" ? "Activar perfil de profe →" : "Editar mi perfil →";
+            });
+        }
+
+
+        // Contadores
+        async function cargarEstadisticas() {
+            const [total, teachers] = await Promise.all([
+                TM.db.from("profiles").select("id", { count: "exact", head: true }),
+                TM.db.from("profiles").select("id", { count: "exact", head: true }).eq("role", "profesor")
+            ]);
+
+            if (total.error || total.count === null) return;
+
+            const teacherCount = teachers.error ? 0 : (teachers.count || 0);
+
+            document.getElementById("stat-musicians").textContent = total.count - teacherCount;
+            document.getElementById("stat-teachers").textContent = teacherCount;
+            document.getElementById("hero-stats").hidden = false;
+        }
+
+        actualizarAcciones();
+        cargarEstadisticas();
+    </script>
+
+</body>
+
+</html>

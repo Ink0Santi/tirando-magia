@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Buscar músicos y profes | Tirando Magia</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header class="site-header" id="site-header" data-active="buscar"></header>
+
+    <main class="page">
+        <div class="container">
+
+            <div class="page-head">
+                <div>
+                    <h1 id="search-title">Buscar músicos</h1>
+                    <p id="search-sub">Encontrá gente para tu próximo proyecto.</p>
+                </div>
+
+                <div class="tabs" role="tablist" aria-label="Tipo de perfil">
+                    <button type="button" class="tab" role="tab" data-tab="todos">Todos</button>
+                    <button type="button" class="tab" role="tab" data-tab="musico">🎸 Músicos</button>
+                    <button type="button" class="tab" role="tab" data-tab="profesor">🎓 Profesores</button>
+                </div>
+            </div>
+
+            <div class="search-layout">
+
+                <!-- FILTROS -->
+                <aside class="card filters" id="filters" aria-label="Filtros">
+
+                    <div class="filters-head">
+                        <h2>Filtros</h2>
+                        <button type="button" class="btn btn-ghost btn-sm" id="clear-filters">Limpiar</button>
+                    </div>
+
+                    <div class="field">
+                        <label for="f-instrument">Instrumento</label>
+                        <select id="f-instrument" data-param="instrumento"></select>
+                    </div>
+
+                    <div class="field">
+                        <label for="f-level" id="f-level-label">Nivel</label>
+                        <select id="f-level" data-param="nivel"></select>
+                    </div>
+
+                    <div class="field">
+                        <label for="f-location">Zona</label>
+                        <input type="text" id="f-location" data-param="zona" placeholder="Ej: Palermo, Córdoba...">
+                    </div>
+
+                    <div class="field" data-show="musico">
+                        <label for="f-looking">¿Qué está buscando?</label>
+                        <select id="f-looking" data-param="busca"></select>
+                    </div>
+
+                    <div class="field" data-show="profesor">
+                        <label for="f-mode">Modalidad</label>
+                        <select id="f-mode" data-param="modalidad"></select>
+                    </div>
+
+                    <div class="field" data-show="profesor">
+                        <label for="f-price">Precio máximo por clase</label>
+                        <div class="input-prefix">
+                            <span>$</span>
+                            <input type="number" id="f-price" data-param="precio" min="0" step="1000" placeholder="Sin límite" inputmode="numeric">
+                        </div>
+                    </div>
+
+                </aside>
+
+
+                <!-- RESULTADOS -->
+                <section aria-live="polite">
+
+                    <div class="results-head">
+                        <div class="search-box">
+                            <span aria-hidden="true">🔎</span>
+                            <input type="search" class="input" id="f-q" data-param="q"
+                                   placeholder="Buscar por nombre, género, artista..." aria-label="Buscar">
+                        </div>
+
+                        <button type="button" class="btn btn-secondary btn-sm filters-toggle" id="filters-toggle"
+                                aria-controls="filters" aria-expanded="false">⚙️ Filtros</button>
+
+                        <select class="input sort-select" id="f-sort" data-param="orden" aria-label="Ordenar">
+                            <option value="recientes">Más recientes</option>
+                            <option value="nombre">Nombre A–Z</option>
+                            <option value="precio">Precio: menor a mayor</option>
+                        </select>
+                    </div>
+
+                    <p class="results-count" id="results-count" style="margin-bottom: 14px;">&nbsp;</p>
+
+                    <div class="results-grid" id="results">
+                        <div class="card skeleton"></div>
+                        <div class="card skeleton"></div>
+                        <div class="card skeleton"></div>
+                        <div class="card skeleton"></div>
+                        <div class="card skeleton"></div>
+                        <div class="card skeleton"></div>
+                    </div>
+
+                </section>
+
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-inner">
+            <span>🎵 Tirando Magia</span>
+            <span>© 2026 — Encontrá tu banda o tu profe.</span>
+        </div>
+    </footer>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+
+    <script>
+        const $ = id => document.getElementById(id);
+
+        const results = $("results");
+        const resultsCount = $("results-count");
+        const filtersPanel = $("filters");
+        const filterInputs = [...document.querySelectorAll("[data-param]")];
+
+        const TEXTS = {
+            todos: { title: "Toda la comunidad", sub: "Músicos y profes en un solo lugar.", one: "perfil", many: "perfiles" },
+            musico: { title: "Buscar músicos", sub: "Encontrá gente para tu próximo proyecto.", one: "músico", many: "músicos" },
+            profesor: { title: "Profesores de música", sub: "Encontrá un profe para aprender o mejorar.", one: "profe", many: "profes" }
+        };
+
+        let profiles = [];
+        let currentUserId = null;
+        let tipo = "todos";
+
+
+        // ==========================================
+        // OPCIONES
+        // ==========================================
+
+        TM.fillSelect($("f-instrument"), TM.INSTRUMENTS, "Todos");
+        TM.fillSelect($("f-level"), TM.LEVELS, "Todos");
+        TM.fillSelect($("f-looking"), TM.LOOKING_FOR, "Todos");
+        TM.fillSelect($("f-mode"), TM.CLASS_MODES, "Todas");
+
+
+        // ==========================================
+        // URL <-> FILTROS
+        // ==========================================
+
+        function leerUrl() {
+            const params = new URLSearchParams(location.search);
+
+            tipo = ["musico", "profesor"].includes(params.get("tipo")) ? params.get("tipo") : "todos";
+
+            filterInputs.forEach(input => {
+                const value = params.get(input.dataset.param);
+                if (value !== null) input.value = value;
+            });
+
+            if (!$("f-sort").value) $("f-sort").value = "recientes";
+        }
+
+        function guardarUrl() {
+            const params = new URLSearchParams();
+
+            if (tipo !== "todos") params.set("tipo", tipo);
+
+            filterInputs.forEach(input => {
+                const value = input.value.trim();
+                if (value && !(input.dataset.param === "orden" && value === "recientes")) {
+                    params.set(input.dataset.param, value);
+                }
+            });
+
+            const query = params.toString();
+            history.replaceState(null, "", "buscar.html" + (query ? "?" + query : ""));
+        }
+
+
+        // ==========================================
+        // PESTAÑAS
+        // ==========================================
+
+        function aplicarTipo() {
+            const text = TEXTS[tipo];
+            const teacherTab = tipo === "profesor";
+
+            $("search-title").textContent = text.title;
+            $("search-sub").textContent = text.sub;
+            document.title = `${text.title} | Tirando Magia`;
+
+            document.querySelectorAll("[data-tab]").forEach(tab => {
+                tab.setAttribute("aria-selected", String(tab.dataset.tab === tipo));
+            });
+
+            document.querySelectorAll("[data-show='musico']").forEach(el => { el.hidden = teacherTab; });
+            document.querySelectorAll("[data-show='profesor']").forEach(el => { el.hidden = !teacherTab; });
+
+            $("f-level-label").textContent = teacherTab ? "Nivel que enseña" : "Nivel";
+
+            const priceOption = $("f-sort").querySelector("option[value='precio']");
+            priceOption.hidden = !teacherTab;
+            if (!teacherTab && $("f-sort").value === "precio") $("f-sort").value = "recientes";
+
+            TM.setActiveNav(teacherTab ? "profesores" : "buscar");
+        }
+
+        document.querySelectorAll("[data-tab]").forEach(tab => {
+            tab.addEventListener("click", () => {
+                tipo = tab.dataset.tab;
+                aplicarTipo();
+                actualizar();
+            });
+        });
+
+
+        // ==========================================
+        // FILTRAR
+        // ==========================================
+
+        function filtros() {
+            return {
+                q: TM.normalize($("f-q").value),
+                instrument: TM.normalize($("f-instrument").value),
+                level: $("f-level").value,
+                location: TM.normalize($("f-location").value),
+                looking: tipo === "profesor" ? "" : $("f-looking").value,
+                mode: tipo === "profesor" ? $("f-mode").value : "",
+                maxPrice: tipo === "profesor" ? parseInt($("f-price").value, 10) : NaN
+            };
+        }
+
+        function coincide(p, f) {
+            const teacher = TM.isTeacher(p);
+
+            if (tipo !== "todos" && TM.roleOf(p) !== tipo) return false;
+
+            if (f.instrument) {
+                const main = TM.normalize(TM.canonicalInstrument(p.instrument));
+                const others = TM.normalize(p.secondary_instruments);
+                if (main !== f.instrument && !others.includes(f.instrument)) return false;
+            }
+
+            if (f.level) {
+                const levels = teacher ? TM.splitList(p.teaching_levels) : [];
+                if (p.level !== f.level && !levels.includes(f.level)) return false;
+            }
+
+            if (f.location && !TM.normalize(p.location).includes(f.location)) return false;
+
+            if (f.looking && p.looking_for !== f.looking) return false;
+
+            if (f.mode) {
+                const both = p.class_mode === "Presencial y online";
+                if (p.class_mode !== f.mode && !both) return false;
+            }
+
+            if (Number.isFinite(f.maxPrice) && f.maxPrice > 0) {
+                if (!p.class_price || p.class_price > f.maxPrice) return false;
+            }
+
+            if (f.q) {
+                const haystack = TM.normalize([
+                    p.name, p.instrument, p.secondary_instruments, p.genres,
+                    p.favorite_artists, p.description, p.location, p.looking_for,
+                    p.teaching_experience
+                ].join(" "));
+
+                if (!f.q.split(/\s+/).every(word => haystack.includes(word))) return false;
+            }
+
+            return true;
+        }
+
+        function ordenar(list) {
+            const sort = $("f-sort").value;
+
+            if (sort === "nombre") {
+                return list.sort((a, b) => (a.name || "").localeCompare(b.name || "", "es"));
+            }
+
+            if (sort === "precio") {
+                return list.sort((a, b) => (a.class_price || Infinity) - (b.class_price || Infinity));
+            }
+
+            return list; // ya vienen ordenados por fecha
+        }
+
+        function hayFiltros() {
+            return filterInputs.some(input => input.dataset.param !== "orden" && input.value.trim());
+        }
+
+
+        // ==========================================
+        // TARJETAS
+        // ==========================================
+
+        function tarjeta(p) {
+            const esc = TM.escapeHTML;
+            const teacher = TM.isTeacher(p);
+            const genres = TM.splitList(p.genres).slice(0, 3);
+            const price = TM.formatPrice(p.class_price);
+
+            const badges = [
+                teacher ? `<span class="badge badge-teacher">🎓 Profe</span>` : "",
+                p.id === currentUserId ? `<span class="badge badge-me">Vos</span>` : "",
+                !teacher && p.level ? `<span class="badge">${esc(TM.labelFor(TM.LEVELS, p.level))}</span>` : ""
+            ].join("");
+
+            const meta = [
+                teacher && p.class_mode ? `<span>${esc(TM.labelFor(TM.CLASS_MODES, p.class_mode))}</span>` : "",
+                teacher && p.teaching_levels ? `<span>📈 ${esc(p.teaching_levels)}</span>` : "",
+                !teacher && p.looking_for ? `<span>🔎 ${esc(p.looking_for)}</span>` : "",
+                p.location ? `<span>📍 ${esc(p.location)}</span>` : ""
+            ].join("");
+
+            return `
+                <a class="card person-card ${teacher ? "teacher" : ""}" href="usuario.html?id=${encodeURIComponent(p.id)}">
+
+                    <div class="person-top">
+                        <div class="avatar avatar-md ${teacher ? "teacher" : ""}">${TM.avatarHTML(p)}</div>
+                        <div style="min-width: 0;">
+                            <h3 class="person-name">${esc(p.name || "Sin nombre")}</h3>
+                            <p class="person-instrument">
+                                ${TM.instrumentEmoji(p.instrument)}
+                                ${esc(TM.canonicalInstrument(p.instrument) || "Sin instrumento")}
+                            </p>
+                        </div>
+                    </div>
+
+                    ${badges ? `<div class="person-badges">${badges}</div>` : ""}
+
+                    ${genres.length ? `
+                        <div class="chips">
+                            ${genres.map(g => `<span class="chip">${esc(g)}</span>`).join("")}
+                        </div>
+                    ` : ""}
+
+                    ${meta ? `<div class="person-meta">${meta}</div>` : ""}
+
+                    <div class="person-foot">
+                        ${teacher ? `
+                            <span class="person-price">
+                                ${price ? `${esc(price)} <small>/ clase</small>` : `<small>Precio a consultar</small>`}
+                            </span>
+                        ` : ""}
+                        <span class="person-cta">Ver perfil →</span>
+                    </div>
+
+                </a>
+            `;
+        }
+
+        function estadoVacio() {
+            if (!hayFiltros() && tipo === "profesor") {
+                return `
+                    <div class="card empty-state">
+                        <div class="empty-icon">🎓</div>
+                        <h2>Todavía no hay profes</h2>
+                        <p>¿Das clases de música? Sé el primero en publicar tus clases.</p>
+                        <a href="perfil.html" class="btn btn-teacher">Crear mi perfil de profe</a>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="card empty-state">
+                    <div class="empty-icon">🎸</div>
+                    <h2>No encontramos resultados</h2>
+                    <p>Probá con otros filtros o buscá algo más general.</p>
+                    <button type="button" class="btn btn-secondary" data-clear>Limpiar filtros</button>
+                </div>
+            `;
+        }
+
+
+        // ==========================================
+        // MOSTRAR
+        // ==========================================
+
+        function actualizar() {
+            guardarUrl();
+
+            const f = filtros();
+            const list = ordenar(profiles.filter(p => coincide(p, f)));
+            const text = TEXTS[tipo];
+
+            resultsCount.innerHTML = `<strong>${list.length}</strong> ${list.length === 1 ? text.one : text.many}`;
+
+            results.innerHTML = list.length ? list.map(tarjeta).join("") : estadoVacio();
+        }
+
+        const actualizarConEspera = TM.debounce(actualizar, 200);
+
+        filterInputs.forEach(input => {
+            input.addEventListener(input.tagName === "SELECT" ? "change" : "input", actualizarConEspera);
+        });
+
+        function limpiarFiltros() {
+            filterInputs.forEach(input => {
+                if (input.dataset.param !== "orden") input.value = "";
+            });
+            actualizar();
+        }
+
+        $("clear-filters").addEventListener("click", limpiarFiltros);
+
+        results.addEventListener("click", event => {
+            if (event.target.closest("[data-clear]")) limpiarFiltros();
+            if (event.target.closest("[data-retry]")) cargar();
+        });
+
+        $("filters-toggle").addEventListener("click", () => {
+            const open = filtersPanel.classList.toggle("open");
+            $("filters-toggle").setAttribute("aria-expanded", String(open));
+        });
+
+
+        // ==========================================
+        // CARGAR
+        // ==========================================
+
+        async function cargar() {
+            const [session, { data, error }] = await Promise.all([
+                TM.getSession(),
+                TM.db.from("profiles").select("*").order("created_at", { ascending: false }).limit(1000)
+            ]);
+
+            currentUserId = session ? session.user.id : null;
+
+            if (error) {
+                console.error("Error cargando perfiles:", error);
+                resultsCount.innerHTML = "&nbsp;";
+                results.innerHTML = `
+                    <div class="card empty-state">
+                        <div class="empty-icon">⚠️</div>
+                        <h2>No se pudieron cargar los perfiles</h2>
+                        <p>${TM.escapeHTML(TM.friendlyError(error))}</p>
+                        <button type="button" class="btn btn-secondary" data-retry>Reintentar</button>
+                    </div>
+                `;
+                return;
+            }
+
+            // Ocultamos perfiles vacíos (sin nombre ni instrumento)
+            profiles = (data || []).filter(p => p.name || p.instrument);
+
+            actualizar();
+        }
+
+
+        leerUrl();
+        aplicarTipo();
+        cargar();
+    </script>
+
+</body>
+
+</html>

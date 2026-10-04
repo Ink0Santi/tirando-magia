@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Crear cuenta | Tirando Magia</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header class="site-header" id="site-header"></header>
+
+    <main class="auth-page">
+
+        <div class="card auth-card">
+
+            <h1>Crear tu cuenta</h1>
+            <p class="auth-sub">Es gratis y te lleva un minuto.</p>
+
+            <form id="register-form" class="auth-form">
+
+                <!-- ROL -->
+                <fieldset class="role-picker">
+                    <legend>¿Cómo vas a usar Tirando Magia?</legend>
+
+                    <div class="role-options">
+                        <label class="role-option">
+                            <input type="radio" name="role" value="musico" checked>
+                            <span class="role-card">
+                                <span class="role-emoji">🎸</span>
+                                <strong>Soy músico</strong>
+                                <small>Busco banda, proyectos o gente para tocar</small>
+                            </span>
+                        </label>
+
+                        <label class="role-option teacher">
+                            <input type="radio" name="role" value="profesor">
+                            <span class="role-card">
+                                <span class="role-emoji">🎓</span>
+                                <strong>Doy clases</strong>
+                                <small>Quiero conseguir alumnos</small>
+                            </span>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <div class="field">
+                    <label for="name">Nombre o nombre artístico</label>
+                    <input type="text" id="name" placeholder="Tu nombre" autocomplete="name" maxlength="60" required>
+                </div>
+
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" placeholder="tuemail@ejemplo.com" autocomplete="email" required>
+                </div>
+
+                <div class="field">
+                    <label for="password">Contraseña</label>
+                    <div class="input-group">
+                        <input type="password" id="password" placeholder="Mínimo 6 caracteres"
+                               autocomplete="new-password" minlength="6" required>
+                        <button type="button" class="input-addon" data-toggle-password="password"
+                                aria-label="Mostrar contraseña" aria-pressed="false">Ver</button>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="instrument" id="instrument-label">Instrumento principal</label>
+                    <select id="instrument" required></select>
+                </div>
+
+                <label class="checkbox">
+                    <input type="checkbox" id="terms" required>
+                    <span>
+                        Acepto los <a href="#" id="open-terms">Términos y Condiciones</a> de Tirando Magia.
+                    </span>
+                </label>
+
+                <div id="register-message" role="alert" hidden></div>
+
+                <button type="submit" class="btn btn-primary btn-block" id="register-button">
+                    Crear cuenta
+                </button>
+
+            </form>
+
+            <div class="divider"><span>o</span></div>
+
+            <p class="auth-alt">
+                ¿Ya tenés una cuenta? <a href="login.html">Iniciá sesión</a>
+            </p>
+
+        </div>
+
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-inner">
+            <span>🎵 Tirando Magia</span>
+            <span>© 2026 — Encontrá tu banda o tu profe.</span>
+        </div>
+    </footer>
+
+
+    <!-- MODAL DE TÉRMINOS -->
+    <div class="modal" id="terms-modal" role="dialog" aria-modal="true" aria-labelledby="terms-title">
+        <div class="modal-box">
+
+            <div class="modal-head">
+                <h2 id="terms-title">Términos y Condiciones</h2>
+                <button type="button" class="icon-btn" data-close-modal aria-label="Cerrar">×</button>
+            </div>
+
+            <div class="modal-body">
+                <h3>1. Uso de Tirando Magia</h3>
+                <p>
+                    Tirando Magia es una plataforma destinada a facilitar el contacto entre personas
+                    interesadas en hacer música, encontrar músicos, formar proyectos musicales y
+                    conectar con profesores de música.
+                </p>
+
+                <h3>2. Responsabilidad de los usuarios</h3>
+                <p>
+                    Cada usuario es responsable de la información que publica, de sus conversaciones
+                    y de sus acciones dentro y fuera de la plataforma.
+                </p>
+                <p>
+                    Tirando Magia no garantiza que la información proporcionada por otros usuarios
+                    sea verdadera, completa o actualizada.
+                </p>
+
+                <h3>3. Clases particulares</h3>
+                <p>
+                    Los precios, horarios, modalidades y condiciones de las clases son definidos
+                    exclusivamente por cada profesor. Tirando Magia no cobra, no intermedia en los
+                    pagos y no es responsable por los acuerdos entre profesores y alumnos.
+                </p>
+
+                <h3>4. Contactos y encuentros fuera del sitio</h3>
+                <p>
+                    Tirando Magia no organiza ni controla encuentros entre usuarios fuera de la
+                    plataforma. Cualquier encuentro, comunicación o actividad realizada fuera del
+                    sitio queda bajo responsabilidad de las personas involucradas.
+                </p>
+                <p>
+                    Se recomienda actuar con precaución y no compartir información personal
+                    innecesaria con desconocidos.
+                </p>
+
+                <h3>5. Chats privados</h3>
+                <p>
+                    Las conversaciones privadas están destinadas únicamente a sus participantes.
+                    No se deben compartir, publicar o distribuir conversaciones privadas de otras
+                    personas sin su autorización.
+                </p>
+
+                <h3>6. Conductas prohibidas</h3>
+                <p>
+                    Está prohibido utilizar Tirando Magia para realizar actividades ilegales,
+                    acosar, amenazar, estafar, suplantar identidades, enviar contenido malicioso
+                    o perjudicar intencionalmente a otros usuarios.
+                </p>
+
+                <h3>7. Información de los perfiles</h3>
+                <p>
+                    Cada usuario es responsable de la información, imágenes y enlaces que publique
+                    en su perfil.
+                </p>
+
+                <h3>8. Reportes y moderación</h3>
+                <p>
+                    Tirando Magia podrá tomar medidas sobre cuentas o contenido que infrinja estas
+                    condiciones o perjudique el funcionamiento de la plataforma.
+                </p>
+
+                <h3>9. Limitación de responsabilidad</h3>
+                <p>
+                    Tirando Magia funciona como una plataforma de conexión entre usuarios. No se
+                    responsabiliza por situaciones, acuerdos, conflictos, daños o actividades que
+                    ocurran fuera de la plataforma como consecuencia del contacto entre usuarios.
+                </p>
+
+                <h3>10. Cambios en los términos</h3>
+                <p>
+                    Estos términos pueden modificarse cuando sea necesario para reflejar cambios
+                    en la plataforma o en su funcionamiento.
+                </p>
+            </div>
+
+            <div class="modal-foot">
+                <button type="button" class="btn btn-primary btn-sm" id="accept-terms">Entendido, acepto</button>
+            </div>
+
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+
+    <script>
+        const form = document.getElementById("register-form");
+        const button = document.getElementById("register-button");
+        const message = document.getElementById("register-message");
+        const instrumentSelect = document.getElementById("instrument");
+        const instrumentLabel = document.getElementById("instrument-label");
+        const termsCheckbox = document.getElementById("terms");
+        const modal = document.getElementById("terms-modal");
+
+        TM.fillSelect(instrumentSelect, TM.INSTRUMENTS, "Seleccioná un instrumento");
+        TM.setupPasswordToggles();
+
+
+        // ==========================================
+        // ROL
+        // ==========================================
+
+        function selectedRole() {
+            return form.querySelector("input[name='role']:checked").value;
+        }
+
+        function actualizarRol() {
+            instrumentLabel.textContent = selectedRole() === "profesor"
+                ? "Instrumento que enseñás"
+                : "Instrumento principal";
+        }
+
+        form.querySelectorAll("input[name='role']").forEach(input => {
+            input.addEventListener("change", actualizarRol);
+        });
+
+        // Permite llegar con ?rol=profesor desde el inicio
+        const rolInicial = new URLSearchParams(location.search).get("rol");
+        if (rolInicial === "profesor" || rolInicial === "musico") {
+            form.querySelector(`input[value='${rolInicial}']`).checked = true;
+        }
+        actualizarRol();
+
+
+        // ==========================================
+        // TÉRMINOS
+        // ==========================================
+
+        function abrirTerminos(event) {
+            event.preventDefault();
+            modal.classList.add("open");
+            modal.querySelector("[data-close-modal]").focus();
+        }
+
+        function cerrarTerminos() {
+            modal.classList.remove("open");
+        }
+
+        document.getElementById("open-terms").addEventListener("click", abrirTerminos);
+        modal.querySelector("[data-close-modal]").addEventListener("click", cerrarTerminos);
+
+        document.getElementById("accept-terms").addEventListener("click", () => {
+            termsCheckbox.checked = true;
+            cerrarTerminos();
+        });
+
+        modal.addEventListener("click", event => {
+            if (event.target === modal) cerrarTerminos();
+        });
+
+        document.addEventListener("keydown", event => {
+            if (event.key === "Escape") cerrarTerminos();
+        });
+
+
+        // ==========================================
+        // REGISTRO
+        // ==========================================
+
+        form.addEventListener("submit", async event => {
+            event.preventDefault();
+            TM.showAlert(message, "");
+
+            const name = document.getElementById("name").value.trim();
+            const email = document.getElementById("email").value.trim().toLowerCase();
+            const password = document.getElementById("password").value;
+            const instrument = instrumentSelect.value;
+            const role = selectedRole();
+
+            if (!name || !email || !password || !instrument) {
+                TM.showAlert(message, "Completá todos los campos.");
+                return;
+            }
+
+            if (password.length < 6) {
+                TM.showAlert(message, "La contraseña tiene que tener al menos 6 caracteres.");
+                return;
+            }
+
+            if (!termsCheckbox.checked) {
+                TM.showAlert(message, "Tenés que aceptar los Términos y Condiciones.");
+                return;
+            }
+
+            TM.setBusy(button, true, "Creando cuenta...");
+
+            try {
+                const { data, error } = await TM.db.auth.signUp({
+                    email,
+                    password,
+                    options: { data: { name, instrument, role } }
+                });
+
+                if (error) throw error;
+
+                // Supabase no da error si el email ya existe: devuelve un usuario sin identidades
+                if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+                    TM.showAlert(message, 'Ya existe una cuenta con ese email. <a href="login.html">Iniciá sesión</a>.');
+                    TM.setBusy(button, false);
+                    return;
+                }
+
+                // Si la confirmación por email está desactivada, ya hay sesión
+                if (data.session) {
+                    await TM.ensureProfile(data.user);
+                    location.href = "perfil.html?bienvenida=1";
+                    return;
+                }
+
+                localStorage.setItem("register_email", email);
+                location.href = "verificar.html";
+
+            } catch (error) {
+                console.error("Error de registro:", error);
+                TM.showAlert(message, TM.escapeHTML(TM.friendlyError(error)));
+                TM.setBusy(button, false);
+            }
+        });
+    </script>
+
+</body>
+
+</html>

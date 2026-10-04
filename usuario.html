@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Perfil | Tirando Magia</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header class="site-header" id="site-header"></header>
+
+    <main class="page">
+        <div class="container-narrow" style="width: min(1040px, 100%);">
+
+            <a href="buscar.html" class="back-link" id="back-link">← Volver a la búsqueda</a>
+
+            <div id="profile-content">
+                <div class="card skeleton" style="min-height: 240px; margin-bottom: 18px;"></div>
+                <div class="profile-grid">
+                    <div class="card skeleton" style="min-height: 180px;"></div>
+                    <div class="card skeleton" style="min-height: 180px;"></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-inner">
+            <span>🎵 Tirando Magia</span>
+            <span>© 2026 — Encontrá tu banda o tu profe.</span>
+        </div>
+    </footer>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+
+    <script>
+        const content = document.getElementById("profile-content");
+        const esc = TM.escapeHTML;
+
+        const userId = new URLSearchParams(location.search).get("id");
+
+        let session = null;
+        let profile = null;
+
+        // Volver a la búsqueda conservando los filtros si venimos de ahí
+        if (document.referrer.includes("buscar.html")) {
+            document.getElementById("back-link").addEventListener("click", event => {
+                event.preventDefault();
+                history.back();
+            });
+        }
+
+
+        // ==========================================
+        // ESTADOS
+        // ==========================================
+
+        function mostrarError(title, text) {
+            content.innerHTML = `
+                <div class="card empty-state">
+                    <div class="empty-icon">🎸</div>
+                    <h2>${esc(title)}</h2>
+                    <p>${esc(text)}</p>
+                    <a href="buscar.html" class="btn btn-primary">Buscar músicos</a>
+                </div>
+            `;
+        }
+
+        function fila(label, value) {
+            return value ? `
+                <div class="info-row">
+                    <span class="info-label">${esc(label)}</span>
+                    <p class="info-value">${esc(value)}</p>
+                </div>
+            ` : "";
+        }
+
+
+        // ==========================================
+        // RENDER
+        // ==========================================
+
+        function mostrarPerfil(p) {
+            const teacher = TM.isTeacher(p);
+            const isMe = session && session.user.id === p.id;
+            const name = p.name || "Músico";
+            const instrument = TM.canonicalInstrument(p.instrument);
+            const genres = TM.splitList(p.genres);
+            const price = TM.formatPrice(p.class_price);
+            const maps = TM.safeUrl(p.maps_url) || TM.mapsUrl(p.location);
+            const instagram = TM.instagramUrl(p.instagram);
+            const youtube = TM.safeUrl(p.youtube);
+
+            document.title = `${name} | Tirando Magia`;
+
+            // Acción principal
+            let mainAction;
+            if (isMe) {
+                mainAction = `<a href="perfil.html" class="btn btn-primary">✏️ Editar mi perfil</a>`;
+            } else if (teacher) {
+                mainAction = `<button type="button" class="btn btn-teacher" id="message-button">🎓 Consultar por clases</button>`;
+            } else {
+                mainAction = `<button type="button" class="btn btn-primary" id="message-button">💬 Mandarle un mensaje</button>`;
+            }
+
+            // Panel de clases
+            const classesPanel = teacher ? `
+                <section class="card panel panel-teacher" style="grid-column: 1 / -1;">
+                    <h2>🎓 Clases</h2>
+
+                    <div class="class-facts">
+                        <div class="fact price">
+                            <span class="info-label">Precio por clase</span>
+                            <strong>${price ? esc(price) : "A consultar"}</strong>
+                        </div>
+                        ${p.class_mode ? `
+                            <div class="fact">
+                                <span class="info-label">Modalidad</span>
+                                <strong>${esc(TM.labelFor(TM.CLASS_MODES, p.class_mode))}</strong>
+                            </div>
+                        ` : ""}
+                        ${p.teaching_levels ? `
+                            <div class="fact">
+                                <span class="info-label">Niveles</span>
+                                <strong>${esc(p.teaching_levels)}</strong>
+                            </div>
+                        ` : ""}
+                        <div class="fact">
+                            <span class="info-label">Enseña</span>
+                            <strong>${TM.instrumentEmoji(instrument)} ${esc(instrument || "Música")}</strong>
+                        </div>
+                    </div>
+
+                    ${p.teaching_experience ? `
+                        <span class="info-label">Experiencia y metodología</span>
+                        <p class="description">${esc(p.teaching_experience)}</p>
+                    ` : ""}
+                </section>
+            ` : "";
+
+            // Panel de música
+            const musicPanel = (genres.length || p.secondary_instruments || p.favorite_artists || p.looking_for) ? `
+                <section class="card panel">
+                    <h2>🎵 Música</h2>
+
+                    ${genres.length ? `
+                        <div class="info-row">
+                            <span class="info-label">Géneros</span>
+                            <div class="chips">${genres.map(g => `<span class="chip">${esc(g)}</span>`).join("")}</div>
+                        </div>
+                    ` : ""}
+
+                    ${fila("Otros instrumentos", p.secondary_instruments)}
+                    ${fila("Artistas favoritos", p.favorite_artists)}
+                    ${p.looking_for ? fila("Está buscando", TM.labelFor(TM.LOOKING_FOR, p.looking_for)) : ""}
+                </section>
+            ` : "";
+
+            // Panel de zona y redes
+            const contactPanel = (p.location || instagram || youtube) ? `
+                <section class="card panel">
+                    <h2>📍 Zona y redes</h2>
+
+                    ${p.location ? `
+                        <div class="info-row">
+                            <span class="info-label">Zona</span>
+                            <p class="info-value">${esc(p.location)}</p>
+                        </div>
+                    ` : ""}
+
+                    ${(instagram || youtube || maps) ? `
+                        <div class="info-row socials">
+                            ${maps && p.location ? `<a class="social-link" href="${esc(maps)}" target="_blank" rel="noopener noreferrer">🗺️ Ver en Maps</a>` : ""}
+                            ${instagram ? `<a class="social-link" href="${esc(instagram)}" target="_blank" rel="noopener noreferrer">📸 Instagram</a>` : ""}
+                            ${youtube ? `<a class="social-link" href="${esc(youtube)}" target="_blank" rel="noopener noreferrer">▶️ Escuchar</a>` : ""}
+                        </div>
+                    ` : ""}
+                </section>
+            ` : "";
+
+            content.innerHTML = `
+                <section class="card profile-hero ${teacher ? "teacher" : ""}">
+
+                    <div class="avatar avatar-xl ${teacher ? "teacher" : ""}">${TM.avatarHTML(p)}</div>
+
+                    <div class="profile-hero-main">
+
+                        <div class="person-badges">
+                            ${teacher ? `<span class="badge badge-teacher">🎓 Profesor/a</span>` : `<span class="badge badge-accent">🎸 Músico</span>`}
+                            ${p.level ? `<span class="badge">${esc(TM.labelFor(TM.LEVELS, p.level))}</span>` : ""}
+                            ${isMe ? `<span class="badge badge-me">Este sos vos</span>` : ""}
+                        </div>
+
+                        <h1>${esc(name)}</h1>
+
+                        <div class="profile-sub">
+                            <span>${TM.instrumentEmoji(instrument)} ${esc(instrument || "Instrumento no especificado")}</span>
+                            ${p.location ? `<span>📍 ${esc(p.location)}</span>` : ""}
+                            ${teacher && price ? `<span class="person-price">${esc(price)} / clase</span>` : ""}
+                        </div>
+
+                        <div class="profile-actions">
+                            ${mainAction}
+                            <button type="button" class="btn btn-secondary" id="share-button">🔗 Compartir</button>
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <div class="profile-grid">
+
+                    ${classesPanel}
+
+                    <section class="card panel" ${!musicPanel && !contactPanel ? `style="grid-column: 1 / -1;"` : ""}>
+                        <h2>👤 Sobre ${teacher ? "el profe" : "mí"}</h2>
+                        <p class="description">${esc(p.description) || `<span class="muted">Todavía no agregó una descripción.</span>`}</p>
+                    </section>
+
+                    ${musicPanel}
+                    ${contactPanel}
+
+                </div>
+            `;
+
+            const messageButton = document.getElementById("message-button");
+            if (messageButton) messageButton.addEventListener("click", () => abrirConversacion(messageButton));
+
+            document.getElementById("share-button").addEventListener("click", compartir);
+        }
+
+
+        // ==========================================
+        // COMPARTIR
+        // ==========================================
+
+        async function compartir() {
+            const url = location.href;
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: document.title, url });
+                    return;
+                } catch {
+                    // cancelado: seguimos con copiar
+                }
+            }
+
+            try {
+                await navigator.clipboard.writeText(url);
+                TM.toast("🔗 Link copiado", "success");
+            } catch {
+                TM.toast("No se pudo copiar el link.", "error");
+            }
+        }
+
+
+        // ==========================================
+        // CONVERSACIÓN
+        // ==========================================
+
+        async function abrirConversacion(button) {
+            if (!session) {
+                location.href = "login.html?next=" + encodeURIComponent("usuario.html?id=" + userId);
+                return;
+            }
+
+            const me = session.user.id;
+
+            TM.setBusy(button, true, "Abriendo chat...");
+
+            try {
+                const { data: existing, error: searchError } = await TM.db
+                    .from("conversations")
+                    .select("id")
+                    .or(`and(user_one.eq.${me},user_two.eq.${userId}),and(user_one.eq.${userId},user_two.eq.${me})`)
+                    .limit(1);
+
+                if (searchError) throw searchError;
+
+                let conversationId = existing && existing[0] ? existing[0].id : null;
+
+                if (!conversationId) {
+                    const { data: created, error: createError } = await TM.db
+                        .from("conversations")
+                        .insert({ user_one: me, user_two: userId })
+                        .select("id")
+                        .single();
+
+                    if (createError) throw createError;
+
+                    conversationId = created.id;
+
+                    // Mensaje sugerido para consultas de clases
+                    if (TM.isTeacher(profile)) {
+                        const instrument = TM.canonicalInstrument(profile.instrument);
+                        sessionStorage.setItem(
+                            "tm_draft_" + conversationId,
+                            `¡Hola ${profile.name || ""}! Vi tu perfil y me interesan tus clases${instrument ? " de " + instrument.toLowerCase() : ""}. ¿Tenés horarios disponibles?`
+                        );
+                    }
+                }
+
+                location.href = "chat.html?conversation=" + encodeURIComponent(conversationId);
+
+            } catch (error) {
+                console.error("Error abriendo conversación:", error);
+                TM.toast("No se pudo abrir la conversación.", "error");
+                TM.setBusy(button, false);
+            }
+        }
+
+
+        // ==========================================
+        // CARGAR
+        // ==========================================
+
+        async function cargar() {
+            if (!TM.isUuid(userId)) {
+                mostrarError("Perfil no encontrado", "El link del perfil no es válido.");
+                return;
+            }
+
+            const [currentSession, { data, error }] = await Promise.all([
+                TM.getSession(),
+                TM.db.from("profiles").select("*").eq("id", userId).maybeSingle()
+            ]);
+
+            session = currentSession;
+
+            if (error) {
+                console.error("Error cargando perfil:", error);
+                mostrarError("No se pudo cargar el perfil", TM.friendlyError(error));
+                return;
+            }
+
+            if (!data) {
+                mostrarError("Perfil no encontrado", "Este usuario todavía no creó su perfil.");
+                return;
+            }
+
+            profile = data;
+            mostrarPerfil(profile);
+        }
+
+        cargar();
+    </script>
+
+</body>
+
+</html>

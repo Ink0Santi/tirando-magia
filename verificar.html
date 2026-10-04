@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Verificar cuenta | Tirando Magia</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header class="site-header" id="site-header"></header>
+
+    <main class="auth-page">
+
+        <div class="card auth-card">
+
+            <h1>Verificá tu email 📬</h1>
+            <p class="auth-sub" id="verify-sub">
+                Te enviamos un código a tu email. Ingresalo para activar tu cuenta.
+            </p>
+
+            <form id="verify-form" class="auth-form">
+
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" placeholder="tuemail@ejemplo.com" autocomplete="email" required>
+                </div>
+
+                <div class="field">
+                    <label for="code">Código de verificación</label>
+                    <input type="text" id="code" class="code-input" placeholder="••••••••"
+                           inputmode="numeric" autocomplete="one-time-code" maxlength="10" required>
+                    <span class="field-hint">Revisá también la carpeta de spam.</span>
+                </div>
+
+                <div id="verify-message" role="alert" hidden></div>
+
+                <button type="submit" class="btn btn-primary btn-block" id="verify-button">
+                    Verificar cuenta
+                </button>
+
+            </form>
+
+            <div class="divider"><span>o</span></div>
+
+            <p class="auth-alt">
+                ¿No te llegó?
+                <button type="button" class="link-button" id="resend-button">Reenviar código</button>
+            </p>
+
+            <p class="auth-alt" style="margin-top: 10px;">
+                <a href="registro.html">Volver al registro</a>
+            </p>
+
+        </div>
+
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-inner">
+            <span>🎵 Tirando Magia</span>
+            <span>© 2026 — Encontrá tu banda o tu profe.</span>
+        </div>
+    </footer>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+
+    <script>
+        const form = document.getElementById("verify-form");
+        const emailInput = document.getElementById("email");
+        const codeInput = document.getElementById("code");
+        const button = document.getElementById("verify-button");
+        const resendButton = document.getElementById("resend-button");
+        const message = document.getElementById("verify-message");
+
+        const savedEmail = localStorage.getItem("register_email");
+
+        if (savedEmail) {
+            emailInput.value = savedEmail;
+            document.getElementById("verify-sub").textContent =
+                `Te enviamos un código a ${savedEmail}. Ingresalo para activar tu cuenta.`;
+            codeInput.focus();
+        } else {
+            emailInput.focus();
+        }
+
+        // Solo números
+        codeInput.addEventListener("input", () => {
+            codeInput.value = codeInput.value.replace(/\D/g, "");
+        });
+
+
+        // ==========================================
+        // VERIFICAR
+        // ==========================================
+
+        form.addEventListener("submit", async event => {
+            event.preventDefault();
+            TM.showAlert(message, "");
+
+            const email = emailInput.value.trim().toLowerCase();
+            const token = codeInput.value.trim();
+
+            if (!email) {
+                TM.showAlert(message, "Ingresá tu email.");
+                return;
+            }
+
+            if (!/^\d{6,10}$/.test(token)) {
+                TM.showAlert(message, "El código tiene que tener solo números.");
+                return;
+            }
+
+            TM.setBusy(button, true, "Verificando...");
+
+            try {
+                let { data, error } = await TM.db.auth.verifyOtp({ email, token, type: "email" });
+
+                // Algunos proyectos de Supabase usan el tipo "signup" para la confirmación
+                if (error) {
+                    ({ data, error } = await TM.db.auth.verifyOtp({ email, token, type: "signup" }));
+                }
+
+                if (error) throw error;
+
+                await TM.ensureProfile(data.user);
+
+                localStorage.removeItem("register_email");
+
+                TM.showAlert(message, "¡Cuenta verificada! Bienvenido a Tirando Magia 🎸", "success");
+
+                setTimeout(() => {
+                    location.href = "perfil.html?bienvenida=1";
+                }, 900);
+
+            } catch (error) {
+                console.error("Error de verificación:", error);
+                TM.showAlert(message, TM.escapeHTML(TM.friendlyError(error)));
+                TM.setBusy(button, false);
+            }
+        });
+
+
+        // ==========================================
+        // REENVIAR CÓDIGO
+        // ==========================================
+
+        function iniciarEspera(seconds) {
+            resendButton.disabled = true;
+
+            const timer = setInterval(() => {
+                seconds--;
+                resendButton.textContent = `Reenviar código (${seconds}s)`;
+
+                if (seconds <= 0) {
+                    clearInterval(timer);
+                    resendButton.disabled = false;
+                    resendButton.textContent = "Reenviar código";
+                }
+            }, 1000);
+        }
+
+        resendButton.addEventListener("click", async () => {
+            const email = emailInput.value.trim().toLowerCase();
+
+            if (!email) {
+                TM.showAlert(message, "Ingresá tu email para reenviar el código.");
+                emailInput.focus();
+                return;
+            }
+
+            resendButton.disabled = true;
+
+            const { error } = await TM.db.auth.resend({ type: "signup", email });
+
+            if (error) {
+                console.error("Error reenviando código:", error);
+                TM.showAlert(message, TM.escapeHTML(TM.friendlyError(error)));
+                resendButton.disabled = false;
+                return;
+            }
+
+            localStorage.setItem("register_email", email);
+            TM.toast("📬 Te enviamos un código nuevo.", "success");
+            iniciarEspera(60);
+        });
+    </script>
+
+</body>
+
+</html>

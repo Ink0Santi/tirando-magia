@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Chat | Tirando Magia</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header class="site-header" id="site-header" data-active="mensajes"></header>
+
+    <main class="chat-page">
+
+        <div class="card chat">
+
+            <div class="chat-header">
+                <a href="mensajes.html" class="icon-btn" aria-label="Volver a mensajes">←</a>
+
+                <a class="chat-peer" id="chat-peer">
+                    <div class="avatar avatar-sm" id="chat-avatar"><span aria-hidden="true">🎸</span></div>
+                    <div style="min-width: 0;">
+                        <h1 class="chat-peer-name" id="chat-name">Cargando...</h1>
+                        <p class="chat-peer-sub" id="chat-sub">&nbsp;</p>
+                    </div>
+                </a>
+            </div>
+
+            <div class="chat-body" id="chat-body">
+                <div class="chat-state">Cargando conversación...</div>
+            </div>
+
+            <form class="chat-composer" id="chat-form">
+                <textarea id="message-input" rows="1" maxlength="2000"
+                          placeholder="Escribí un mensaje..." aria-label="Mensaje" disabled></textarea>
+                <button type="submit" class="send-btn" id="send-button" aria-label="Enviar" disabled>➤</button>
+            </form>
+
+        </div>
+
+    </main>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+
+    <script>
+        const body = document.getElementById("chat-body");
+        const form = document.getElementById("chat-form");
+        const input = document.getElementById("message-input");
+        const sendButton = document.getElementById("send-button");
+
+        const conversationId = new URLSearchParams(location.search).get("conversation");
+
+        let currentUser = null;
+        let channel = null;
+        let lastDay = null;
+        let sending = false;
+
+
+        // ==========================================
+        // UTILIDADES
+        // ==========================================
+
+        function mostrarEstado(html) {
+            body.innerHTML = `<div class="chat-state">${html}</div>`;
+        }
+
+        function scrollAbajo() {
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function ajustarAltura() {
+            input.style.height = "auto";
+            input.style.height = Math.min(input.scrollHeight, 160) + "px";
+        }
+
+        function actualizarBoton() {
+            sendButton.disabled = sending || !input.value.trim();
+        }
+
+
+        // ==========================================
+        // MENSAJES
+        // ==========================================
+
+        function renderMessage(message) {
+            if (!message || !message.id) return;
+
+            // Evitar duplicados (lo insertamos nosotros y también llega por tiempo real)
+            if (body.querySelector(`[data-message-id="${CSS.escape(String(message.id))}"]`)) return;
+
+            const empty = body.querySelector(".chat-state");
+            if (empty) empty.remove();
+
+            const date = new Date(message.created_at);
+            const dayKey = date.toDateString();
+
+            if (dayKey !== lastDay) {
+                lastDay = dayKey;
+                const separator = document.createElement("div");
+                separator.className = "day-sep";
+                separator.textContent = TM.formatDayLabel(date);
+                body.appendChild(separator);
+            }
+
+            const element = document.createElement("div");
+            element.className = message.sender_id === currentUser.id ? "msg mine" : "msg";
+            element.dataset.messageId = message.id;
+
+            element.innerHTML = `
+                <div class="msg-bubble">
+                    <p>${TM.escapeHTML(message.content)}</p>
+                    <span class="msg-time">${TM.formatTime(date)}</span>
+                </div>
+            `;
+
+            const nearBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 120;
+
+            body.appendChild(element);
+
+            if (nearBottom || message.sender_id === currentUser.id) scrollAbajo();
+        }
+
+
+        // ==========================================
+        // CABECERA
+        // ==========================================
+
+        async function cargarOtroUsuario(otherId) {
+            document.getElementById("chat-peer").href = "usuario.html?id=" + encodeURIComponent(otherId);
+
+            const { data: profile, error } = await TM.db
+                .from("profiles")
+                .select("*")
+                .eq("id", otherId)
+                .maybeSingle();
+
+            if (error) console.error("Error cargando perfil:", error);
+
+            const p = profile || { id: otherId };
+            const teacher = TM.isTeacher(p);
+            const instrument = TM.canonicalInstrument(p.instrument);
+
+            document.getElementById("chat-name").textContent = p.name || "Usuario";
+            document.getElementById("chat-sub").textContent =
+                (teacher ? "🎓 Profe de " : "") + (instrument || "Músico");
+
+            const avatar = document.getElementById("chat-avatar");
+            avatar.innerHTML = TM.avatarHTML(p);
+            avatar.classList.toggle("teacher", teacher);
+
+            document.title = `${p.name || "Chat"} | Tirando Magia`;
+        }
+
+
+        // ==========================================
+        // CARGAR CHAT
+        // ==========================================
+
+        async function cargarChat() {
+            const session = await TM.requireSession();
+            if (!session) return;
+
+            currentUser = session.user;
+
+            if (!TM.isUuid(conversationId)) {
+                mostrarEstado(`<h2>Conversación no encontrada</h2><a class="link" href="mensajes.html">Volver a mensajes</a>`);
+                return;
+            }
+
+            const { data: conversation, error } = await TM.db
+                .from("conversations")
+                .select("id, user_one, user_two")
+                .eq("id", conversationId)
+                .maybeSingle();
+
+            if (error || !conversation) {
+                if (error) console.error("Error cargando conversación:", error);
+                mostrarEstado(`<h2>No se pudo abrir esta conversación</h2><a class="link" href="mensajes.html">Volver a mensajes</a>`);
+                return;
+            }
+
+            if (conversation.user_one !== currentUser.id && conversation.user_two !== currentUser.id) {
+                mostrarEstado(`<h2>No tenés acceso a esta conversación</h2><a class="link" href="mensajes.html">Volver a mensajes</a>`);
+                return;
+            }
+
+            const otherId = conversation.user_one === currentUser.id ? conversation.user_two : conversation.user_one;
+
+            const [, { data: messages, error: messagesError }] = await Promise.all([
+                cargarOtroUsuario(otherId),
+                TM.db
+                    .from("messages")
+                    .select("id, conversation_id, sender_id, content, created_at")
+                    .eq("conversation_id", conversationId)
+                    .order("created_at", { ascending: true })
+            ]);
+
+            if (messagesError) {
+                console.error("Error cargando mensajes:", messagesError);
+                mostrarEstado(`<h2>No se pudieron cargar los mensajes</h2><p>${TM.escapeHTML(TM.friendlyError(messagesError))}</p>`);
+                return;
+            }
+
+            body.innerHTML = "";
+
+            if (!messages.length) {
+                mostrarEstado(`<div>👋</div><p>Todavía no hay mensajes. ¡Empezá la conversación!</p>`);
+            } else {
+                messages.forEach(renderMessage);
+            }
+
+            scrollAbajo();
+
+            // Borrador sugerido (por ejemplo, al consultar por clases)
+            const draftKey = "tm_draft_" + conversationId;
+            const draft = sessionStorage.getItem(draftKey);
+            if (draft && !messages.length) {
+                input.value = draft;
+            }
+            sessionStorage.removeItem(draftKey);
+
+            input.disabled = false;
+            ajustarAltura();
+            actualizarBoton();
+            input.focus();
+
+            activarTiempoReal();
+        }
+
+
+        // ==========================================
+        // TIEMPO REAL
+        // ==========================================
+
+        function activarTiempoReal() {
+            channel = TM.db
+                .channel("chat-" + conversationId)
+                .on(
+                    "postgres_changes",
+                    {
+                        event: "INSERT",
+                        schema: "public",
+                        table: "messages",
+                        filter: `conversation_id=eq.${conversationId}`
+                    },
+                    payload => renderMessage(payload.new)
+                )
+                .subscribe();
+        }
+
+        window.addEventListener("pagehide", () => {
+            if (channel) TM.db.removeChannel(channel);
+        });
+
+
+        // ==========================================
+        // ENVIAR
+        // ==========================================
+
+        async function enviar() {
+            const content = input.value.trim();
+            if (!content || sending || !currentUser) return;
+
+            sending = true;
+            input.value = "";
+            ajustarAltura();
+            actualizarBoton();
+
+            const { data, error } = await TM.db
+                .from("messages")
+                .insert({
+                    conversation_id: conversationId,
+                    sender_id: currentUser.id,
+                    content
+                })
+                .select()
+                .single();
+
+            sending = false;
+
+            if (error) {
+                console.error("Error enviando mensaje:", error);
+                // Devolvemos el texto para no perderlo
+                input.value = content;
+                ajustarAltura();
+                actualizarBoton();
+                TM.toast("No se pudo enviar el mensaje.", "error");
+                return;
+            }
+
+            renderMessage(data);
+            actualizarBoton();
+            input.focus();
+        }
+
+        form.addEventListener("submit", event => {
+            event.preventDefault();
+            enviar();
+        });
+
+        // Enter envía, Shift+Enter hace un salto de línea
+        input.addEventListener("keydown", event => {
+            if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+                event.preventDefault();
+                enviar();
+            }
+        });
+
+        input.addEventListener("input", () => {
+            ajustarAltura();
+            actualizarBoton();
+        });
+
+
+        cargarChat();
+    </script>
+
+</body>
+
+</html>
